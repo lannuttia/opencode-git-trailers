@@ -18,9 +18,13 @@ export function extractCommitMessage(command: string): string | null {
     return null;
   }
 
-  const doubleQuoteMatch = command.match(/-m\s+"([^"]*)"/);
+  // Match double-quoted strings, handling escaped quotes (\")
+  const doubleQuoteMatch = command.match(/-m\s+"((?:\\"|[^"])*)"/);
   if (doubleQuoteMatch) {
-    return doubleQuoteMatch[1];
+    // Unescape the matched content
+    return doubleQuoteMatch[1]
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
   }
 
   const singleQuoteMatch = command.match(/-m\s+'([^']*)'/);

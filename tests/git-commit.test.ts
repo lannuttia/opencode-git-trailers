@@ -94,5 +94,20 @@ describe("git-commit", () => {
       const command = "git commit";
       expect(extractCommitMessage(command)).toBeNull();
     });
+
+    it("should extract message with escaped double quotes", () => {
+      const command = 'git commit -m "She said \\"hello\\""';
+      expect(extractCommitMessage(command)).toBe('She said "hello"');
+    });
+
+    it("should extract message with escaped backslashes and quotes", () => {
+      const command = 'git commit -m "Path: C:\\\\Users\\\\test\\\\ and \\"quoted\\""';
+      expect(extractCommitMessage(command)).toBe('Path: C:\\Users\\test\\ and "quoted"');
+    });
+
+    it("should extract message with escaped single quotes in double quotes", () => {
+      const command = "git commit -m \"It\\'s working\"";
+      expect(extractCommitMessage(command)).toBe("It\\'s working");
+    });
   });
 });
