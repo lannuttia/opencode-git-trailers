@@ -223,6 +223,79 @@ describe("opencode-git-trailers", () => {
     expect(output.args.command).toContain("Provider: anthropic");
   });
 
+  it("should handle missing model.id gracefully in chat.params", async () => {
+    const mockShellChain = {
+      text: vi.fn(),
+      quiet: vi.fn(),
+      nothrow: vi.fn(),
+      cwd: vi.fn(),
+    };
+
+    mockShellChain.cwd.mockReturnValue(mockShellChain);
+    mockShellChain.nothrow.mockReturnValue(mockShellChain);
+    mockShellChain.quiet.mockReturnValue(mockShellChain);
+    mockShellChain.text
+      .mockResolvedValueOnce("opencode.git-trailers.session {{session}}\nopencode.git-trailers.model {{model}}")
+      .mockResolvedValueOnce("John Doe")
+      .mockResolvedValueOnce("john@example.com");
+
+    const mockShell = vi.fn().mockReturnValue(mockShellChain);
+
+    const mockInput: PluginInput = {
+      client: {} as any,
+      project: {} as any,
+      directory: "/test/dir",
+      worktree: "/test/worktree",
+      experimental_workspace: { register: vi.fn() },
+      serverUrl: new URL("http://localhost"),
+      $: mockShell as any,
+    };
+
+    const hooks = await plugin(mockInput);
+
+    // Call chat.params with missing model.id
+    if (hooks["chat.params"]) {
+      const chatInput = {
+        sessionID: "test-session",
+        agent: "main",
+        model: {} as any, // model exists but has no id
+        provider: { info: { name: "anthropic" } } as any,
+        message: {} as any,
+      };
+      const chatOutput = {
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: undefined,
+        options: {},
+      };
+
+      // Should not throw
+      await expect(hooks["chat.params"]!(chatInput, chatOutput)).resolves.not.toThrow();
+    }
+
+    const hookFn = hooks["tool.execute.before"];
+    const hookInput = {
+      tool: "bash",
+      sessionID: "test-session",
+      callID: "call-123",
+    };
+
+    const output = {
+      args: {
+        command: 'git commit -m "test commit"',
+      },
+    };
+
+    await hookFn!(hookInput, output);
+
+    // Trailers with only placeholder variables are filtered out
+    // So only {{session}} with a real value should be added (session ID is provided)
+    expect(output.args.command).toContain("Session: test-session");
+    expect(output.args.command).not.toContain("Model:");
+    expect(output.args.command).toContain("test commit");
+  });
+
   it("should gracefully handle errors without breaking commits", async () => {
     const mockShellChain = {
       text: vi.fn().mockRejectedValue(new Error("Git config failed")),
