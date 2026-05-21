@@ -1,6 +1,10 @@
 import { isGitCommitCommand, extractCommitMessage } from "./git-commit.js";
 import { formatTrailers } from "./trailers.js";
 
+function escapeForDoubleQuotes(str: string): string {
+  return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+}
+
 export function modifyGitCommitCommand(
   command: string,
   trailers: Record<string, string>
@@ -19,7 +23,7 @@ export function modifyGitCommitCommand(
   }
 
   const formattedTrailers: string = formatTrailers(trailers);
-  const newMessage: string = `${message}\n\n${formattedTrailers}`;
+  const newMessage: string = `${message}\\n\\n${escapeForDoubleQuotes(formattedTrailers)}`;
 
   return command.replace(/-m\s+"([^"]*)"/, `-m "${newMessage}"`);
 }
