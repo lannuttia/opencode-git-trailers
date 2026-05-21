@@ -9,40 +9,46 @@ import type { Variables } from "./interpolate.js";
 const plugin: Plugin = async (input) => {
   return {
     "tool.execute.before": async (hookInput, output) => {
-      // Only process bash tool
-      if (hookInput.tool !== "bash") {
-        return;
+      try {
+        // Only process bash tool
+        if (hookInput.tool !== "bash") {
+          return;
+        }
+
+        const command: string = output.args?.command;
+        if (!command || !isGitCommitCommand(command)) {
+          return;
+        }
+
+        // Read git trailer configuration
+        const cwd: string = output.args?.workdir || input.directory;
+        const trailerConfig: Record<string, string> = await readGitTrailers(cwd);
+
+        if (Object.keys(trailerConfig).length === 0) {
+          return;
+        }
+
+        // Collect all variables
+        const userVars: Variables = await getUserVariables(cwd);
+        const contextVars: Variables = buildContextVariables({
+          session: hookInput.sessionID,
+        });
+
+        const allVariables: Variables = { ...userVars, ...contextVars };
+
+        // Build and apply trailers
+        const trailers: Record<string, string> = buildTrailers(
+          trailerConfig,
+          allVariables
+        );
+        const modifiedCommand: string = modifyGitCommitCommand(command, trailers);
+
+        output.args.command = modifiedCommand;
+      } catch (error) {
+        // Gracefully handle errors - don't break the commit
+        // Log error for debugging but allow commit to proceed unchanged
+        console.error("opencode-git-trailers: Error processing trailers:", error);
       }
-
-      const command: string = output.args?.command;
-      if (!command || !isGitCommitCommand(command)) {
-        return;
-      }
-
-      // Read git trailer configuration
-      const cwd: string = output.args?.workdir || input.directory;
-      const trailerConfig: Record<string, string> = await readGitTrailers(cwd);
-
-      if (Object.keys(trailerConfig).length === 0) {
-        return;
-      }
-
-      // Collect all variables
-      const userVars: Variables = await getUserVariables(cwd);
-      const contextVars: Variables = buildContextVariables({
-        session: hookInput.sessionID,
-      });
-
-      const allVariables: Variables = { ...userVars, ...contextVars };
-
-      // Build and apply trailers
-      const trailers: Record<string, string> = buildTrailers(
-        trailerConfig,
-        allVariables
-      );
-      const modifiedCommand: string = modifyGitCommitCommand(command, trailers);
-
-      output.args.command = modifiedCommand;
     },
   };
 };

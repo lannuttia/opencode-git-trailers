@@ -159,4 +159,45 @@ describe("opencode-git-trailers", () => {
     // The command should not be modified
     expect(output.args.command).toBe("git status");
   });
+
+  it("should gracefully handle errors without breaking commits", async () => {
+    const mockConfigShell = {
+      text: vi.fn().mockRejectedValue(new Error("Git config failed")),
+      quiet: vi.fn().mockReturnThis(),
+      nothrow: vi.fn().mockReturnThis(),
+      cwd: vi.fn().mockReturnThis(),
+    };
+
+    vi.mocked($).mockReturnValueOnce(mockConfigShell as any);
+
+    const mockInput: PluginInput = {
+      client: {} as any,
+      project: {} as any,
+      directory: "/test/dir",
+      worktree: "/test/worktree",
+      experimental_workspace: { register: vi.fn() },
+      serverUrl: new URL("http://localhost"),
+      $: vi.fn() as any,
+    };
+
+    const hooks = await plugin(mockInput);
+    const hookFn = hooks["tool.execute.before"];
+
+    const hookInput = {
+      tool: "bash",
+      sessionID: "test-session",
+      callID: "call-123",
+    };
+
+    const output = {
+      args: {
+        command: 'git commit -m "test commit"',
+      },
+    };
+
+    await expect(hookFn!(hookInput, output)).resolves.not.toThrow();
+    
+    // Command should remain unchanged when error occurs
+    expect(output.args.command).toBe('git commit -m "test commit"');
+  });
 });
