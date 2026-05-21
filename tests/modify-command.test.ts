@@ -252,3 +252,58 @@ describe("escapeForAnsiCQuotes", () => {
     expect(result).toBe("plain text");
   });
 });
+
+describe("modifyGitCommitCommand - duplicate trailer detection", () => {
+  it("should not add duplicate trailers if they already exist in the message", () => {
+    const command = 'git commit -m "feat: add new feature\n\nModel: claude-sonnet-4-5\nCoding-agent: OpenCode"';
+    const trailers = {
+      "model": "claude-sonnet-4-5",
+      "coding-agent": "OpenCode",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(command, trailers);
+
+    // When all trailers already exist, command should remain unchanged
+    expect(modifiedCommand).toBe(command);
+  });
+
+  it("should add trailers that don't already exist", () => {
+    const command = 'git commit -m "feat: add new feature\n\nModel: claude-sonnet-4-5"';
+    const trailers = {
+      "model": "claude-sonnet-4-5",
+      "coding-agent": "OpenCode",
+      "session": "abc123",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(command, trailers);
+
+    const match = modifiedCommand.match(/-m\s+\$'([^']*)'/);
+    expect(match).not.toBeNull();
+    
+    const escapedMessage = match![1];
+    const unescapedMessage = escapedMessage
+      .replace(/\\n/g, "\n")
+      .replace(/\\'/g, "'")
+      .replace(/\\\\/g, "\\");
+
+    // Model should appear once (already existed)
+    const modelCount = (unescapedMessage.match(/Model: claude-sonnet-4-5/g) || []).length;
+    expect(modelCount).toBe(1);
+
+    // Coding-agent and Session should be added (didn't exist)
+    expect(unescapedMessage).toContain("Coding-agent: OpenCode");
+    expect(unescapedMessage).toContain("Session: abc123");
+  });
+
+  it("should handle case-insensitive trailer key matching", () => {
+    const command = 'git commit -m "feat: add feature\n\nmodel: claude-sonnet-4-5"';
+    const trailers = {
+      "model": "claude-sonnet-4-5",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(command, trailers);
+
+    // When trailer already exists (case-insensitive), command should remain unchanged
+    expect(modifiedCommand).toBe(command);
+  });
+});
