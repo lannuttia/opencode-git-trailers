@@ -125,4 +125,34 @@ describe("readGitTrailers", () => {
     execSync('git config --unset opencode.git-trailers.session', { cwd: testRepo });
     execSync('git config --unset opencode.git-trailers.timestamp', { cwd: testRepo });
   });
+
+  it("should skip malformed config lines without spaces", async () => {
+    // Create a mock shell that returns malformed output
+    const mockShellWithMalformed = (strings: TemplateStringsArray, ...values: any[]) => {
+      const chainable = {
+        cwd(dir: string) {
+          return chainable;
+        },
+        nothrow() {
+          return chainable;
+        },
+        quiet() {
+          return chainable;
+        },
+        async text(): Promise<string> {
+          // Return output with valid and malformed lines
+          return "opencode.git-trailers.model {{model}}\nmalformedline\nopencode.git-trailers.session {{session}}";
+        },
+      };
+      return chainable;
+    };
+
+    const trailers = await readGitTrailers(mockShellWithMalformed, testRepo);
+    
+    // Should only include the valid lines, malformed line should be skipped
+    expect(trailers).toEqual({
+      model: "{{model}}",
+      session: "{{session}}",
+    });
+  });
 });
