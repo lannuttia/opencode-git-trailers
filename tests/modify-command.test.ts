@@ -30,8 +30,6 @@ describe("modifyGitCommitCommand", () => {
     };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    
-    console.log("Modified command:", modifiedCommand);
 
     // Execute the modified command
     execSync(modifiedCommand, { cwd: testRepo });
