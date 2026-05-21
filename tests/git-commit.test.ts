@@ -30,6 +30,11 @@ describe("git-commit", () => {
       expect(extractCommitMessage(command)).toBe("Initial commit");
     });
 
+    it("should extract unquoted single-word message", () => {
+      const command = "git commit -m test";
+      expect(extractCommitMessage(command)).toBe("test");
+    });
+
     it("should return null for non-commit commands", () => {
       const command = "git status";
       expect(extractCommitMessage(command)).toBeNull();

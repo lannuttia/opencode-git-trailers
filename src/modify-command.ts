@@ -40,5 +40,11 @@ export function modifyGitCommitCommand(
     return command.replace(/-m\s+'([^']*)'/, `-m '${newMessage}'`);
   }
 
+  const unquotedMatch = command.match(/-m\s+(\S+)/);
+  if (unquotedMatch) {
+    const newMessage: string = `${message}\\n\\n${escapeForDoubleQuotes(formattedTrailers)}`;
+    return command.replace(/-m\s+(\S+)/, `-m "${newMessage}"`);
+  }
+
   return command;
 }

@@ -17,5 +17,10 @@ export function extractCommitMessage(command: string): string | null {
     return singleQuoteMatch[1];
   }
 
+  const unquotedMatch = command.match(/-m\s+(\S+)/);
+  if (unquotedMatch) {
+    return unquotedMatch[1];
+  }
+
   return null;
 }
