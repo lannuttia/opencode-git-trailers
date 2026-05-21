@@ -8,6 +8,21 @@ describe("git-commit", () => {
       expect(isGitCommitCommand(command)).toBe(true);
     });
 
+    it("should detect git commit with additional flags", () => {
+      const command = 'git commit --allow-empty -m "Empty commit"';
+      expect(isGitCommitCommand(command)).toBe(true);
+    });
+
+    it("should detect git commit with flags after message", () => {
+      const command = 'git commit -m "Message" --no-verify';
+      expect(isGitCommitCommand(command)).toBe(true);
+    });
+
+    it("should handle leading whitespace", () => {
+      const command = '   git commit -m "test"';
+      expect(isGitCommitCommand(command)).toBe(true);
+    });
+
     it("should return false for non-commit git commands", () => {
       const command = "git status";
       expect(isGitCommitCommand(command)).toBe(false);
@@ -15,6 +30,11 @@ describe("git-commit", () => {
 
     it("should return false for non-git commands", () => {
       const command = "npm install";
+      expect(isGitCommitCommand(command)).toBe(false);
+    });
+
+    it("should return false for commands that contain 'git commit' but don't start with it", () => {
+      const command = "echo git commit";
       expect(isGitCommitCommand(command)).toBe(false);
     });
   });
@@ -35,8 +55,43 @@ describe("git-commit", () => {
       expect(extractCommitMessage(command)).toBe("test");
     });
 
+    it("should extract message with special characters", () => {
+      const command = 'git commit -m "feat: add feature (closes #123)"';
+      expect(extractCommitMessage(command)).toBe("feat: add feature (closes #123)");
+    });
+
+    it("should extract message from command with flags before -m", () => {
+      const command = 'git commit --allow-empty -m "Empty commit"';
+      expect(extractCommitMessage(command)).toBe("Empty commit");
+    });
+
+    it("should extract message from command with flags after -m", () => {
+      const command = 'git commit -m "Message" --no-verify';
+      expect(extractCommitMessage(command)).toBe("Message");
+    });
+
+    it("should handle message with no spacing after -m", () => {
+      const command = 'git commit -m"test"';
+      expect(extractCommitMessage(command)).toBeNull();
+    });
+
+    it("should handle empty message in quotes", () => {
+      const command = 'git commit -m ""';
+      expect(extractCommitMessage(command)).toBe("");
+    });
+
+    it("should extract first message when multiple -m flags present", () => {
+      const command = 'git commit -m "First line" -m "Second line"';
+      expect(extractCommitMessage(command)).toBe("First line");
+    });
+
     it("should return null for non-commit commands", () => {
       const command = "git status";
+      expect(extractCommitMessage(command)).toBeNull();
+    });
+
+    it("should return null for commit without -m flag", () => {
+      const command = "git commit";
       expect(extractCommitMessage(command)).toBeNull();
     });
   });

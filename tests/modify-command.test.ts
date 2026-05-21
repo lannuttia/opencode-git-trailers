@@ -52,4 +52,124 @@ describe("modifyGitCommitCommand", () => {
     expect(lines[2]).toBe("Model: claude-sonnet-4-5");
     expect(lines[3]).toBe("Coding-agent: OpenCode");
   });
+
+  it("should handle commit message with single quotes", () => {
+    const originalCommand = "git commit --allow-empty -m 'Single quoted message'";
+    const trailers = {
+      "Session": "test123",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("Single quoted message");
+    expect(commitMessage).toContain("Session: test123");
+  });
+
+  it("should handle commit message with special shell characters", () => {
+    const originalCommand = 'git commit --allow-empty -m "Message with $pecial ch@rs!"';
+    const trailers = {
+      "Special": "test",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("Message with $pecial ch@rs!");
+    expect(commitMessage).toContain("Special: test");
+  });
+
+  it("should handle trailer values with single quotes", () => {
+    const originalCommand = 'git commit --allow-empty -m "Test"';
+    const trailers = {
+      "Value": "Contains 'single quotes' inside",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("Value: Contains 'single quotes' inside");
+  });
+
+  it("should handle trailer values with backslashes", () => {
+    const originalCommand = 'git commit --allow-empty -m "Test"';
+    const trailers = {
+      "Path": "C:\\Users\\test\\path",
+    };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("Path: C:\\Users\\test\\path");
+  });
+
+  it("should return unmodified command for non-commit commands", () => {
+    const originalCommand = "git status";
+    const trailers = { "Model": "test" };
+    
+    const result = modifyGitCommitCommand(originalCommand, trailers);
+    expect(result).toBe("git status");
+  });
+
+  it("should return unmodified command when no trailers provided", () => {
+    const originalCommand = 'git commit -m "Test"';
+    const trailers = {};
+    
+    const result = modifyGitCommitCommand(originalCommand, trailers);
+    expect(result).toBe('git commit -m "Test"');
+  });
+
+  it("should return unmodified command when commit has no -m flag", () => {
+    const originalCommand = "git commit";
+    const trailers = { "Model": "test" };
+    
+    const result = modifyGitCommitCommand(originalCommand, trailers);
+    expect(result).toBe("git commit");
+  });
+
+  it("should handle unquoted single-word commit message", () => {
+    const originalCommand = "git commit --allow-empty -m test";
+    const trailers = { "Session": "abc" };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("test");
+    expect(commitMessage).toContain("Session: abc");
+  });
+
+  it("should preserve command structure with flags after message", () => {
+    const originalCommand = 'git commit -m "Test" --no-verify --allow-empty';
+    const trailers = { "Model": "test" };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    
+    expect(modifiedCommand).toContain("--no-verify");
+    expect(modifiedCommand).toContain("--allow-empty");
+  });
 });
