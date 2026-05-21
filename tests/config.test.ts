@@ -21,14 +21,11 @@ describe("readGitTrailers", () => {
   });
 
   it("should parse git config trailer values", async () => {
-    const gitConfigOutput = `opencode.git-trailers.model
-opencode.git-trailers.co-authored-by`;
+    const gitConfigOutput = `opencode.git-trailers.model {{model}}
+opencode.git-trailers.co-authored-by AI Assistant <ai@opencode.ai>`;
 
     const mockShell = {
-      text: vi.fn()
-        .mockResolvedValueOnce(gitConfigOutput)
-        .mockResolvedValueOnce("{{model}}")
-        .mockResolvedValueOnce("AI Assistant <ai@opencode.ai>"),
+      text: vi.fn().mockResolvedValue(gitConfigOutput),
       quiet: vi.fn().mockReturnThis(),
       nothrow: vi.fn().mockReturnThis(),
       cwd: vi.fn().mockReturnThis(),
