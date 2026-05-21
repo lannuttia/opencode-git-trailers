@@ -1,19 +1,28 @@
-import { $ } from "bun";
 import type { Variables } from "./interpolate.js";
+
+type ShellAPI = {
+  (strings: TemplateStringsArray, ...values: any[]): {
+    cwd(dir: string): any;
+    nothrow(): any;
+    quiet(): any;
+    text(): Promise<string>;
+  };
+};
 
 /**
  * Retrieves user variables from git config.
+ * @param $shell - OpenCode's shell API
  * @param cwd - Current working directory
  * @returns Variables object with user.name and user.email
  */
-export async function getUserVariables(cwd: string): Promise<Variables> {
-  const name: string = await $`git config user.name`
+export async function getUserVariables($shell: ShellAPI, cwd: string): Promise<Variables> {
+  const name: string = await $shell`git config user.name`
     .cwd(cwd)
     .nothrow()
     .quiet()
     .text();
 
-  const email: string = await $`git config user.email`
+  const email: string = await $shell`git config user.email`
     .cwd(cwd)
     .nothrow()
     .quiet()
