@@ -36,20 +36,25 @@ describe("variables", () => {
   });
 
   describe("buildContextVariables", () => {
-    it("should build variables with model, provider, session", () => {
-      const context = {
+    it("should build context variables", () => {
+      const result = buildContextVariables({
+        session: "test-session",
+      });
+
+      expect(result.session).toBe("test-session");
+      expect(result.timestamp).toBeDefined();
+      expect(new Date(result.timestamp).toISOString()).toBe(result.timestamp);
+    });
+
+    it("should include model and provider when provided", () => {
+      const result = buildContextVariables({
+        session: "test-session",
         model: "claude-sonnet-4-5",
         provider: "anthropic",
-        session: "abc123",
-      };
+      });
 
-      const vars = buildContextVariables(context);
-
-      expect(vars.model).toBe("claude-sonnet-4-5");
-      expect(vars.provider).toBe("anthropic");
-      expect(vars.session).toBe("abc123");
-      expect(vars.timestamp).toBeDefined();
-      expect(typeof vars.timestamp).toBe("string");
+      expect(result.model).toBe("claude-sonnet-4-5");
+      expect(result.provider).toBe("anthropic");
     });
 
     it("should handle partial context", () => {

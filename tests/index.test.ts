@@ -160,6 +160,84 @@ describe("opencode-git-trailers", () => {
     expect(output.args.command).toBe("git status");
   });
 
+  it("should capture model and provider from chat.params hook", async () => {
+    const mockInput: PluginInput = {
+      client: {} as any,
+      project: {} as any,
+      directory: "/test/dir",
+      worktree: "/test/worktree",
+      experimental_workspace: { register: vi.fn() },
+      serverUrl: new URL("http://localhost"),
+      $: vi.fn() as any,
+    };
+
+    const hooks = await plugin(mockInput);
+
+    // Simulate chat.params hook being called first
+    if (hooks["chat.params"]) {
+      const chatInput = {
+        sessionID: "test-session",
+        agent: "main",
+        model: { id: "claude-sonnet-4-5" } as any,
+        provider: { info: { name: "anthropic" } } as any,
+        message: {} as any,
+      };
+      const chatOutput = {
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: undefined,
+        options: {},
+      };
+      await hooks["chat.params"]!(chatInput, chatOutput);
+    }
+
+    // Now test tool.execute.before with trailers that use model/provider
+    const mockConfigShell = {
+      text: vi.fn().mockResolvedValue("opencode.git-trailers.model {{model}}\nopencode.git-trailers.provider {{provider}}"),
+      quiet: vi.fn().mockReturnThis(),
+      nothrow: vi.fn().mockReturnThis(),
+      cwd: vi.fn().mockReturnThis(),
+    };
+
+    const mockNameShell = {
+      text: vi.fn().mockResolvedValue("John Doe"),
+      quiet: vi.fn().mockReturnThis(),
+      nothrow: vi.fn().mockReturnThis(),
+      cwd: vi.fn().mockReturnThis(),
+    };
+
+    const mockEmailShell = {
+      text: vi.fn().mockResolvedValue("john@example.com"),
+      quiet: vi.fn().mockReturnThis(),
+      nothrow: vi.fn().mockReturnThis(),
+      cwd: vi.fn().mockReturnThis(),
+    };
+
+    vi.mocked($)
+      .mockReturnValueOnce(mockConfigShell as any)
+      .mockReturnValueOnce(mockNameShell as any)
+      .mockReturnValueOnce(mockEmailShell as any);
+
+    const hookFn = hooks["tool.execute.before"];
+    const hookInput = {
+      tool: "bash",
+      sessionID: "test-session",
+      callID: "call-123",
+    };
+
+    const output = {
+      args: {
+        command: 'git commit -m "test commit"',
+      },
+    };
+
+    await hookFn!(hookInput, output);
+
+    expect(output.args.command).toContain("Model: claude-sonnet-4-5");
+    expect(output.args.command).toContain("Provider: anthropic");
+  });
+
   it("should gracefully handle errors without breaking commits", async () => {
     const mockConfigShell = {
       text: vi.fn().mockRejectedValue(new Error("Git config failed")),

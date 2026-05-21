@@ -7,7 +7,25 @@ import { getUserVariables, buildContextVariables } from "./variables.js";
 import type { Variables } from "./interpolate.js";
 
 const plugin: Plugin = async (input) => {
+  // Store model/provider in closure to access across hooks
+  let currentModel: string | undefined;
+  let currentProvider: string | undefined;
+
   return {
+    "chat.params": async (hookInput, output) => {
+      // Capture model and provider from chat parameters
+      try {
+        if (hookInput.model?.id) {
+          currentModel = hookInput.model.id;
+        }
+        if (hookInput.provider?.info?.name) {
+          currentProvider = hookInput.provider.info.name;
+        }
+      } catch (error) {
+        // Silently ignore errors in capturing model/provider
+      }
+    },
+
     "tool.execute.before": async (hookInput, output) => {
       try {
         // Only process bash tool
@@ -32,6 +50,8 @@ const plugin: Plugin = async (input) => {
         const userVars: Variables = await getUserVariables(cwd);
         const contextVars: Variables = buildContextVariables({
           session: hookInput.sessionID,
+          model: currentModel,
+          provider: currentProvider,
         });
 
         const allVariables: Variables = { ...userVars, ...contextVars };
