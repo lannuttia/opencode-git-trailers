@@ -2,21 +2,15 @@ import { isGitCommitCommand, extractCommitMessage } from "./git-commit.js";
 import { formatTrailers } from "./trailers.js";
 
 /**
- * Escapes a string for use within double quotes in a shell command.
+ * Escapes a string for use within $'...' ANSI-C quoting.
  * @param str - String to escape
- * @returns Escaped string safe for double-quoted context
+ * @returns Escaped string safe for $'...' context
  */
-function escapeForDoubleQuotes(str: string): string {
-  return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
-}
-
-/**
- * Escapes a string for use within single quotes in a shell command.
- * @param str - String to escape
- * @returns Escaped string safe for single-quoted context
- */
-function escapeForSingleQuotes(str: string): string {
-  return str.replace(/'/g, "'\\''");
+function escapeForAnsiCQuotes(str: string): string {
+  return str
+    .replace(/\\/g, "\\\\")  // Escape backslashes
+    .replace(/'/g, "\\'")     // Escape single quotes
+    .replace(/\n/g, "\\n");   // Convert newlines to \n escape sequence
 }
 
 /**
@@ -44,24 +38,15 @@ export function modifyGitCommitCommand(
   }
 
   const formattedTrailers: string = formatTrailers(trailers);
+  
+  // Build the new message with trailers using ANSI-C quoting ($'...')
+  // This allows \n to be interpreted as actual newlines by the shell
+  const escapedMessage: string = escapeForAnsiCQuotes(message);
+  const escapedTrailers: string = escapeForAnsiCQuotes(formattedTrailers);
+  const newMessage: string = `${escapedMessage}\\n\\n${escapedTrailers}`;
 
-  const doubleQuoteMatch = command.match(/-m\s+"([^"]*)"/);
-  if (doubleQuoteMatch) {
-    const newMessage: string = `${message}\\n\\n${escapeForDoubleQuotes(formattedTrailers)}`;
-    return command.replace(/-m\s+"([^"]*)"/, `-m "${newMessage}"`);
-  }
-
-  const singleQuoteMatch = command.match(/-m\s+'([^']*)'/);
-  if (singleQuoteMatch) {
-    const newMessage: string = `${message}\n\n${escapeForSingleQuotes(formattedTrailers)}`;
-    return command.replace(/-m\s+'([^']*)'/, `-m '${newMessage}'`);
-  }
-
-  const unquotedMatch = command.match(/-m\s+(\S+)/);
-  if (unquotedMatch) {
-    const newMessage: string = `${message}\\n\\n${escapeForDoubleQuotes(formattedTrailers)}`;
-    return command.replace(/-m\s+(\S+)/, `-m "${newMessage}"`);
-  }
-
-  return command;
+  // Replace the -m flag with $'...' syntax which interprets escape sequences
+  // Match any of: -m "..." or -m '...' or -m word
+  // Note: $$ in replacement string becomes a literal $ in the result
+  return command.replace(/-m\s+(?:"[^"]*"|'[^']*'|\S+)/, "-m $$'" + newMessage + "'");
 }
