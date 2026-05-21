@@ -33,13 +33,13 @@ const plugin: Plugin = async (input) => {
           return;
         }
 
-        const command: string = output.args?.command;
+        const command: string | undefined = output.args?.command;
         if (!command || !isGitCommitCommand(command)) {
           return;
         }
 
         // Read git trailer configuration
-        const cwd: string = output.args?.workdir || input.directory;
+        const cwd: string = (output.args?.workdir as string | undefined) || input.directory;
         const trailerConfig: Record<string, string> = await readGitTrailers(cwd);
 
         if (Object.keys(trailerConfig).length === 0) {
@@ -61,7 +61,7 @@ const plugin: Plugin = async (input) => {
           trailerConfig,
           allVariables
         );
-        const modifiedCommand: string = modifyGitCommitCommand(command, trailers);
+        const modifiedCommand: string = modifyGitCommitCommand(command as string, trailers);
 
         output.args.command = modifiedCommand;
       } catch (error) {

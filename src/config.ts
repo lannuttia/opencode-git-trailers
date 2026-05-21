@@ -2,6 +2,12 @@ import { $ } from "bun";
 
 const TRAILER_PREFIX = "opencode.git-trailers.";
 
+/**
+ * Reads git trailer configuration from git config.
+ * Looks for config keys starting with "opencode.git-trailers."
+ * @param cwd - Current working directory
+ * @returns Record of trailer configuration key-value pairs
+ */
 export async function readGitTrailers(cwd: string): Promise<Record<string, string>> {
   const configOutput = await $`git config --get-regexp '^opencode\\.git-trailers\\.'`
     .cwd(cwd)

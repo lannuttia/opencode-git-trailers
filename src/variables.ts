@@ -1,6 +1,11 @@
 import { $ } from "bun";
 import type { Variables } from "./interpolate.js";
 
+/**
+ * Retrieves user variables from git config.
+ * @param cwd - Current working directory
+ * @returns Variables object with user.name and user.email
+ */
 export async function getUserVariables(cwd: string): Promise<Variables> {
   const name: string = await $`git config user.name`
     .cwd(cwd)
@@ -20,6 +25,11 @@ export async function getUserVariables(cwd: string): Promise<Variables> {
   };
 }
 
+/**
+ * Builds context variables from the current session and model information.
+ * @param context - Context object with optional model, provider, and session
+ * @returns Variables object with context information and current timestamp
+ */
 export function buildContextVariables(context: {
   model?: string;
   provider?: string;
