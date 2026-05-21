@@ -37,31 +37,24 @@ describe("opencode-git-trailers", () => {
   });
 
   it("should modify git commit commands with trailers", async () => {
-    const mockConfigShell = {
-      text: vi.fn().mockResolvedValue("opencode.git-trailers.session {{session}}"),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
+    const mockShellChain = {
+      text: vi.fn(),
+      quiet: vi.fn(),
+      nothrow: vi.fn(),
+      cwd: vi.fn(),
     };
 
-    const mockNameShell = {
-      text: vi.fn().mockResolvedValue("John Doe"),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
-    };
+    // Setup chain for all methods
+    mockShellChain.cwd.mockReturnValue(mockShellChain);
+    mockShellChain.nothrow.mockReturnValue(mockShellChain);
+    mockShellChain.quiet.mockReturnValue(mockShellChain);
+    mockShellChain.text
+      .mockResolvedValueOnce("opencode.git-trailers.session {{session}}")
+      .mockResolvedValueOnce("John Doe")
+      .mockResolvedValueOnce("john@example.com");
 
-    const mockEmailShell = {
-      text: vi.fn().mockResolvedValue("john@example.com"),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
-    };
-
-    vi.mocked($)
-      .mockReturnValueOnce(mockConfigShell as any)
-      .mockReturnValueOnce(mockNameShell as any)
-      .mockReturnValueOnce(mockEmailShell as any);
+    // Mock the template tag function
+    const mockShell = vi.fn().mockReturnValue(mockShellChain);
 
     const mockInput: PluginInput = {
       client: {} as any,
@@ -70,7 +63,7 @@ describe("opencode-git-trailers", () => {
       worktree: "/test/worktree",
       experimental_workspace: { register: vi.fn() },
       serverUrl: new URL("http://localhost"),
-      $: vi.fn() as any,
+      $: mockShell as any,
     };
 
     const hooks = await plugin(mockInput);
@@ -161,6 +154,25 @@ describe("opencode-git-trailers", () => {
   });
 
   it("should capture model and provider from chat.params hook", async () => {
+    const mockShellChain = {
+      text: vi.fn(),
+      quiet: vi.fn(),
+      nothrow: vi.fn(),
+      cwd: vi.fn(),
+    };
+
+    // Setup chain for all methods
+    mockShellChain.cwd.mockReturnValue(mockShellChain);
+    mockShellChain.nothrow.mockReturnValue(mockShellChain);
+    mockShellChain.quiet.mockReturnValue(mockShellChain);
+    mockShellChain.text
+      .mockResolvedValueOnce("opencode.git-trailers.model {{model}}\nopencode.git-trailers.provider {{provider}}")
+      .mockResolvedValueOnce("John Doe")
+      .mockResolvedValueOnce("john@example.com");
+
+    // Mock the template tag function
+    const mockShell = vi.fn().mockReturnValue(mockShellChain);
+
     const mockInput: PluginInput = {
       client: {} as any,
       project: {} as any,
@@ -168,7 +180,7 @@ describe("opencode-git-trailers", () => {
       worktree: "/test/worktree",
       experimental_workspace: { register: vi.fn() },
       serverUrl: new URL("http://localhost"),
-      $: vi.fn() as any,
+      $: mockShell as any,
     };
 
     const hooks = await plugin(mockInput);
@@ -192,33 +204,6 @@ describe("opencode-git-trailers", () => {
       await hooks["chat.params"]!(chatInput, chatOutput);
     }
 
-    // Now test tool.execute.before with trailers that use model/provider
-    const mockConfigShell = {
-      text: vi.fn().mockResolvedValue("opencode.git-trailers.model {{model}}\nopencode.git-trailers.provider {{provider}}"),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
-    };
-
-    const mockNameShell = {
-      text: vi.fn().mockResolvedValue("John Doe"),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
-    };
-
-    const mockEmailShell = {
-      text: vi.fn().mockResolvedValue("john@example.com"),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
-    };
-
-    vi.mocked($)
-      .mockReturnValueOnce(mockConfigShell as any)
-      .mockReturnValueOnce(mockNameShell as any)
-      .mockReturnValueOnce(mockEmailShell as any);
-
     const hookFn = hooks["tool.execute.before"];
     const hookInput = {
       tool: "bash",
@@ -239,14 +224,20 @@ describe("opencode-git-trailers", () => {
   });
 
   it("should gracefully handle errors without breaking commits", async () => {
-    const mockConfigShell = {
+    const mockShellChain = {
       text: vi.fn().mockRejectedValue(new Error("Git config failed")),
-      quiet: vi.fn().mockReturnThis(),
-      nothrow: vi.fn().mockReturnThis(),
-      cwd: vi.fn().mockReturnThis(),
+      quiet: vi.fn(),
+      nothrow: vi.fn(),
+      cwd: vi.fn(),
     };
 
-    vi.mocked($).mockReturnValueOnce(mockConfigShell as any);
+    // Setup chain for all methods
+    mockShellChain.cwd.mockReturnValue(mockShellChain);
+    mockShellChain.nothrow.mockReturnValue(mockShellChain);
+    mockShellChain.quiet.mockReturnValue(mockShellChain);
+
+    // Mock the template tag function
+    const mockShell = vi.fn().mockReturnValue(mockShellChain);
 
     const mockInput: PluginInput = {
       client: {} as any,
@@ -255,7 +246,7 @@ describe("opencode-git-trailers", () => {
       worktree: "/test/worktree",
       experimental_workspace: { register: vi.fn() },
       serverUrl: new URL("http://localhost"),
-      $: vi.fn() as any,
+      $: mockShell as any,
     };
 
     const hooks = await plugin(mockInput);

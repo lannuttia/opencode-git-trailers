@@ -9,29 +9,33 @@ vi.mock("bun", () => ({
 describe("variables", () => {
   describe("getUserVariables", () => {
     it("should extract user.name and user.email from git config", async () => {
-      const mockShellName = {
-        text: vi.fn().mockResolvedValue("John Doe"),
-        quiet: vi.fn().mockReturnThis(),
-        nothrow: vi.fn().mockReturnThis(),
-        cwd: vi.fn().mockReturnThis(),
+      const mockShellChain = {
+        text: vi.fn(),
+        quiet: vi.fn(),
+        nothrow: vi.fn(),
+        cwd: vi.fn(),
       };
 
-      const mockShellEmail = {
-        text: vi.fn().mockResolvedValue("john@example.com"),
-        quiet: vi.fn().mockReturnThis(),
-        nothrow: vi.fn().mockReturnThis(),
-        cwd: vi.fn().mockReturnThis(),
-      };
+      // Setup chain for all methods
+      mockShellChain.cwd.mockReturnValue(mockShellChain);
+      mockShellChain.nothrow.mockReturnValue(mockShellChain);
+      mockShellChain.quiet.mockReturnValue(mockShellChain);
+      mockShellChain.text
+        .mockResolvedValueOnce("John Doe")
+        .mockResolvedValueOnce("john@example.com");
 
-      vi.mocked($)
-        .mockReturnValueOnce(mockShellName as any)
-        .mockReturnValueOnce(mockShellEmail as any);
+      // Mock the template tag function
+      const mockShell = vi.fn().mockReturnValue(mockShellChain);
 
-      const vars = await getUserVariables("/tmp/repo");
+      const vars = await getUserVariables(mockShell as any, "/tmp/repo");
       expect(vars).toEqual({
         "user.name": "John Doe",
         "user.email": "john@example.com",
       });
+
+      // Verify the shell was called correctly
+      expect(mockShell).toHaveBeenCalledTimes(2);
+      expect(mockShellChain.cwd).toHaveBeenCalledWith("/tmp/repo");
     });
   });
 
