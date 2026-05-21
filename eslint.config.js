@@ -16,6 +16,7 @@ export default tseslint.config(
     files: ["tests/**/*.ts"],
     rules: {
       "@typescript-eslint/consistent-type-assertions": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
   {
