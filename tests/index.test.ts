@@ -38,7 +38,7 @@ describe("opencode-git-trailers", () => {
 
   it("should modify git commit commands with trailers", async () => {
     const mockConfigShell = {
-      text: vi.fn().mockResolvedValue("opencode.git-trailers.model {{model}}"),
+      text: vi.fn().mockResolvedValue("opencode.git-trailers.session {{session}}"),
       quiet: vi.fn().mockReturnThis(),
       nothrow: vi.fn().mockReturnThis(),
       cwd: vi.fn().mockReturnThis(),
@@ -91,7 +91,8 @@ describe("opencode-git-trailers", () => {
     await hookFn!(hookInput, output);
 
     // The command should be modified with trailers
-    expect(output.args.command).toContain("Model:");
+    expect(output.args.command).toContain("Session:");
+    expect(output.args.command).toContain("test-session");
     expect(output.args.command).toContain("test commit");
   });
 

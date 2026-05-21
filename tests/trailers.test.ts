@@ -33,5 +33,36 @@ describe("trailers", () => {
         "session": "abc123",
       });
     });
+
+    it("should filter out trailers with empty values", () => {
+      const config = {
+        "model": "{{model}}",
+        "session": "{{session}}",
+        "provider": "{{provider}}",
+      };
+      const variables = {
+        "model": "claude-sonnet-4-5",
+        "session": "",
+        "provider": "   ",
+      };
+      const result = buildTrailers(config, variables);
+      expect(result).toEqual({
+        "model": "claude-sonnet-4-5",
+      });
+    });
+
+    it("should filter out trailers with undefined variables", () => {
+      const config = {
+        "model": "{{model}}",
+        "missing": "{{undefined_var}}",
+      };
+      const variables = {
+        "model": "claude-sonnet-4-5",
+      };
+      const result = buildTrailers(config, variables);
+      expect(result).toEqual({
+        "model": "claude-sonnet-4-5",
+      });
+    });
   });
 });

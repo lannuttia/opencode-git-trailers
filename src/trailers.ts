@@ -15,7 +15,11 @@ export function buildTrailers(
 ): Record<string, string> {
   const result: Record<string, string> = {};
   for (const [key, template] of Object.entries(config)) {
-    result[key] = interpolateVariables(template, variables);
+    const value: string = interpolateVariables(template, variables);
+    const trimmedValue: string = value.trim();
+    if (trimmedValue && !trimmedValue.match(/^\{\{.*\}\}$/)) {
+      result[key] = value;
+    }
   }
   return result;
 }
