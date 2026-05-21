@@ -37,6 +37,21 @@ describe("git-commit", () => {
       const command = "echo git commit";
       expect(isGitCommitCommand(command)).toBe(false);
     });
+
+    it("should detect git commit in chained commands with &&", () => {
+      const command = 'git add . && git commit -m "test"';
+      expect(isGitCommitCommand(command)).toBe(true);
+    });
+
+    it("should detect git commit in chained commands with ;", () => {
+      const command = 'git add .; git commit -m "test"';
+      expect(isGitCommitCommand(command)).toBe(true);
+    });
+
+    it("should detect git commit in chained commands with multiple stages", () => {
+      const command = 'git add src/ && git add tests/ && git commit -m "test"';
+      expect(isGitCommitCommand(command)).toBe(true);
+    });
   });
 
   describe("extractCommitMessage", () => {
@@ -108,6 +123,21 @@ describe("git-commit", () => {
     it("should extract message with escaped single quotes in double quotes", () => {
       const command = "git commit -m \"It\\'s working\"";
       expect(extractCommitMessage(command)).toBe("It\\'s working");
+    });
+
+    it("should extract message from chained command with &&", () => {
+      const command = 'git add . && git commit -m "test message"';
+      expect(extractCommitMessage(command)).toBe("test message");
+    });
+
+    it("should extract message from chained command with ;", () => {
+      const command = 'git add .; git commit -m "test message"';
+      expect(extractCommitMessage(command)).toBe("test message");
+    });
+
+    it("should extract message from complex chained command", () => {
+      const command = 'git add src/ tests/ && git commit -m "feat: add feature" --no-verify';
+      expect(extractCommitMessage(command)).toBe("feat: add feature");
     });
   });
 });

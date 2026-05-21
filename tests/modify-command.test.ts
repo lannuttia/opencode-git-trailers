@@ -172,6 +172,38 @@ describe("modifyGitCommitCommand", () => {
     expect(modifiedCommand).toContain("--no-verify");
     expect(modifiedCommand).toContain("--allow-empty");
   });
+
+  it("should handle chained commands with &&", () => {
+    const originalCommand = 'git add . && git commit --allow-empty -m "Test"';
+    const trailers = { "Session": "abc123" };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("Test");
+    expect(commitMessage).toContain("Session: abc123");
+  });
+
+  it("should handle chained commands with semicolon", () => {
+    const originalCommand = 'git add .; git commit --allow-empty -m "Test2"';
+    const trailers = { "Model": "test-model" };
+
+    const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
+    execSync(modifiedCommand, { cwd: testRepo });
+
+    const commitMessage = execSync("git log -1 --format=%B", {
+      cwd: testRepo,
+      encoding: "utf-8",
+    });
+
+    expect(commitMessage).toContain("Test2");
+    expect(commitMessage).toContain("Model: test-model");
+  });
 });
 
 describe("escapeForAnsiCQuotes", () => {

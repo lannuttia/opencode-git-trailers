@@ -1,10 +1,20 @@
 /**
  * Checks if a command is a git commit command.
+ * Handles both standalone and chained commands (using && or ;).
  * @param command - The command string to check
- * @returns True if the command starts with "git commit"
+ * @returns True if the command contains "git commit"
  */
 export function isGitCommitCommand(command: string): boolean {
-  return command.trim().startsWith("git commit");
+  const trimmed = command.trim();
+  
+  // Check if it starts with "git commit"
+  if (trimmed.startsWith("git commit")) {
+    return true;
+  }
+  
+  // Check for git commit in chained commands
+  // Match: && git commit or ; git commit (with word boundaries)
+  return /[;&]\s*git\s+commit\b/.test(command);
 }
 
 /**
