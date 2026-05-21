@@ -1,0 +1,53 @@
+{
+  "name": "opencode-git-trailers",
+  "version": "0.1.0",
+  "description": "OpenCode plugin for managing git trailers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/ tests/",
+    "prepublishOnly": "bun run build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@opencode-ai/plugin": "^1.2.1",
+    "@types/node": "^25.2.3",
+    "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^9.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.0.18"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lannuttia/opencode-git-trailers.git"
+  },
+  "author": "Anthony Lannutti <lannuttia@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/lannuttia/opencode-git-trailers#readme",
+  "bugs": "https://github.com/lannuttia/opencode-git-trailers/issues",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "git",
+    "git-trailers",
+    "ai",
+    "coding-assistant",
+    "plugin"
+  ],
+  "dependencies": {}
+}
