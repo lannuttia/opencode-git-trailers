@@ -37,6 +37,54 @@ describe("variables", () => {
       expect(mockShell).toHaveBeenCalledTimes(2);
       expect(mockShellChain.cwd).toHaveBeenCalledWith("/tmp/repo");
     });
+
+    it("should trim whitespace from git config values", async () => {
+      const mockShellChain = {
+        text: vi.fn(),
+        quiet: vi.fn(),
+        nothrow: vi.fn(),
+        cwd: vi.fn(),
+      };
+
+      mockShellChain.cwd.mockReturnValue(mockShellChain);
+      mockShellChain.nothrow.mockReturnValue(mockShellChain);
+      mockShellChain.quiet.mockReturnValue(mockShellChain);
+      mockShellChain.text
+        .mockResolvedValueOnce("  John Doe  \n")
+        .mockResolvedValueOnce("  john@example.com  \n");
+
+      const mockShell = vi.fn().mockReturnValue(mockShellChain);
+
+      const vars = await getUserVariables(mockShell as any, "/tmp/repo");
+      expect(vars).toEqual({
+        "user.name": "John Doe",
+        "user.email": "john@example.com",
+      });
+    });
+
+    it("should handle empty git config values", async () => {
+      const mockShellChain = {
+        text: vi.fn(),
+        quiet: vi.fn(),
+        nothrow: vi.fn(),
+        cwd: vi.fn(),
+      };
+
+      mockShellChain.cwd.mockReturnValue(mockShellChain);
+      mockShellChain.nothrow.mockReturnValue(mockShellChain);
+      mockShellChain.quiet.mockReturnValue(mockShellChain);
+      mockShellChain.text
+        .mockResolvedValueOnce("")
+        .mockResolvedValueOnce("");
+
+      const mockShell = vi.fn().mockReturnValue(mockShellChain);
+
+      const vars = await getUserVariables(mockShell as any, "/tmp/repo");
+      expect(vars).toEqual({
+        "user.name": "",
+        "user.email": "",
+      });
+    });
   });
 
   describe("buildContextVariables", () => {

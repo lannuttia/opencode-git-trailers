@@ -77,4 +77,52 @@ describe("readGitTrailers", () => {
       "coding-agent": "OpenCode",
     });
   });
+
+  it("should return empty object when no trailers configured", async () => {
+    const emptyRepo = mkdtempSync(join(tmpdir(), "git-trailers-empty-"));
+    execSync("git init", { cwd: emptyRepo });
+    
+    const trailers = await readGitTrailers(mockShell, emptyRepo);
+    
+    expect(trailers).toEqual({});
+    
+    rmSync(emptyRepo, { recursive: true, force: true });
+  });
+
+  it("should handle trailer keys with hyphens", async () => {
+    execSync('git config opencode.git-trailers.co-authored-by "{{user.name}}"', { cwd: testRepo });
+    
+    const trailers = await readGitTrailers(mockShell, testRepo);
+    
+    expect(trailers).toHaveProperty("co-authored-by", "{{user.name}}");
+    
+    // Clean up
+    execSync('git config --unset opencode.git-trailers.co-authored-by', { cwd: testRepo });
+  });
+
+  it("should handle trailer values with spaces", async () => {
+    execSync('git config opencode.git-trailers.message "A message with spaces"', { cwd: testRepo });
+    
+    const trailers = await readGitTrailers(mockShell, testRepo);
+    
+    expect(trailers).toHaveProperty("message", "A message with spaces");
+    
+    // Clean up
+    execSync('git config --unset opencode.git-trailers.message', { cwd: testRepo });
+  });
+
+  it("should handle multiple trailer configurations", async () => {
+    execSync('git config opencode.git-trailers.session "{{session}}"', { cwd: testRepo });
+    execSync('git config opencode.git-trailers.timestamp "{{timestamp}}"', { cwd: testRepo });
+    
+    const trailers = await readGitTrailers(mockShell, testRepo);
+    
+    expect(Object.keys(trailers).length).toBeGreaterThanOrEqual(4);
+    expect(trailers).toHaveProperty("session", "{{session}}");
+    expect(trailers).toHaveProperty("timestamp", "{{timestamp}}");
+    
+    // Clean up
+    execSync('git config --unset opencode.git-trailers.session', { cwd: testRepo });
+    execSync('git config --unset opencode.git-trailers.timestamp', { cwd: testRepo });
+  });
 });
