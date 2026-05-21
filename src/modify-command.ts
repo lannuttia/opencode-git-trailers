@@ -6,11 +6,14 @@ import { formatTrailers } from "./trailers.js";
  * @param str - String to escape
  * @returns Escaped string safe for $'...' context
  */
-function escapeForAnsiCQuotes(str: string): string {
+export function escapeForAnsiCQuotes(str: string): string {
   return str
-    .replace(/\\/g, "\\\\")  // Escape backslashes
-    .replace(/'/g, "\\'")     // Escape single quotes
-    .replace(/\n/g, "\\n");   // Convert newlines to \n escape sequence
+    .replace(/\\/g, "\\\\")    // Escape backslashes
+    .replace(/'/g, "\\'")       // Escape single quotes
+    .replace(/\n/g, "\\n")      // Convert newlines to \n escape sequence
+    .replace(/\r/g, "\\r")      // Convert carriage returns to \r escape sequence
+    .replace(/\t/g, "\\t")      // Convert tabs to \t escape sequence
+    .replace(/\x00/g, "\\x00"); // Convert null bytes to \x00 escape sequence
 }
 
 /**

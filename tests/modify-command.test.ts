@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import { mkdtempSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import { modifyGitCommitCommand } from "../src/modify-command.js";
+import { modifyGitCommitCommand, escapeForAnsiCQuotes } from "../src/modify-command.js";
 
 describe("modifyGitCommitCommand", () => {
   let testRepo: string;
@@ -171,5 +171,52 @@ describe("modifyGitCommitCommand", () => {
     
     expect(modifiedCommand).toContain("--no-verify");
     expect(modifiedCommand).toContain("--allow-empty");
+  });
+});
+
+describe("escapeForAnsiCQuotes", () => {
+  it("should escape backslashes", () => {
+    const result = escapeForAnsiCQuotes("path\\to\\file");
+    expect(result).toBe("path\\\\to\\\\file");
+  });
+
+  it("should escape single quotes", () => {
+    const result = escapeForAnsiCQuotes("it's a test");
+    expect(result).toBe("it\\'s a test");
+  });
+
+  it("should escape newlines", () => {
+    const result = escapeForAnsiCQuotes("line1\nline2");
+    expect(result).toBe("line1\\nline2");
+  });
+
+  it("should escape carriage returns", () => {
+    const result = escapeForAnsiCQuotes("text\rwith\rcarriage");
+    expect(result).toBe("text\\rwith\\rcarriage");
+  });
+
+  it("should escape tabs", () => {
+    const result = escapeForAnsiCQuotes("text\twith\ttabs");
+    expect(result).toBe("text\\twith\\ttabs");
+  });
+
+  it("should escape null bytes", () => {
+    const result = escapeForAnsiCQuotes("text\x00with\x00null");
+    expect(result).toBe("text\\x00with\\x00null");
+  });
+
+  it("should handle multiple special characters", () => {
+    const result = escapeForAnsiCQuotes("path\\file\nit's\ttesting\r\x00");
+    expect(result).toBe("path\\\\file\\nit\\'s\\ttesting\\r\\x00");
+  });
+
+  it("should handle empty string", () => {
+    const result = escapeForAnsiCQuotes("");
+    expect(result).toBe("");
+  });
+
+  it("should handle string with no special characters", () => {
+    const result = escapeForAnsiCQuotes("plain text");
+    expect(result).toBe("plain text");
   });
 });
