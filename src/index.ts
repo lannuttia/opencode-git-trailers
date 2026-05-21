@@ -40,14 +40,14 @@ const plugin: Plugin = async (input) => {
 
         // Read git trailer configuration
         const cwd: string = (output.args?.workdir as string | undefined) || input.directory;
-        const trailerConfig: Record<string, string> = await readGitTrailers(cwd);
+        const trailerConfig: Record<string, string> = await readGitTrailers(input.$, cwd);
 
         if (Object.keys(trailerConfig).length === 0) {
           return;
         }
 
         // Collect all variables
-        const userVars: Variables = await getUserVariables(cwd);
+        const userVars: Variables = await getUserVariables(input.$, cwd);
         const contextVars: Variables = buildContextVariables({
           session: hookInput.sessionID,
           model: currentModel,
@@ -61,6 +61,7 @@ const plugin: Plugin = async (input) => {
           trailerConfig,
           allVariables
         );
+        
         const modifiedCommand: string = modifyGitCommitCommand(command as string, trailers);
 
         output.args.command = modifiedCommand;
