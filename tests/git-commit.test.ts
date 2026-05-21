@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isGitCommitCommand } from "../src/git-commit.js";
+import { isGitCommitCommand, extractCommitMessage } from "../src/git-commit.js";
 
 describe("git-commit", () => {
   describe("isGitCommitCommand", () => {
@@ -16,6 +16,18 @@ describe("git-commit", () => {
     it("should return false for non-git commands", () => {
       const command = "npm install";
       expect(isGitCommitCommand(command)).toBe(false);
+    });
+  });
+
+  describe("extractCommitMessage", () => {
+    it("should extract message from -m flag with double quotes", () => {
+      const command = 'git commit -m "Initial commit"';
+      expect(extractCommitMessage(command)).toBe("Initial commit");
+    });
+
+    it("should return null for non-commit commands", () => {
+      const command = "git status";
+      expect(extractCommitMessage(command)).toBeNull();
     });
   });
 });
