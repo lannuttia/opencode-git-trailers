@@ -31,8 +31,8 @@ describe("modifyGitCommitCommand", () => {
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
 
-    // Execute the modified command
-    execSync(modifiedCommand, { cwd: testRepo });
+    // Execute the modified command using bash (required for $'...' syntax)
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     // Read the commit message
     const commitMessage = execSync("git log -1 --format=%B", {
@@ -60,7 +60,7 @@ describe("modifyGitCommitCommand", () => {
     };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
@@ -78,7 +78,7 @@ describe("modifyGitCommitCommand", () => {
     };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
@@ -96,7 +96,7 @@ describe("modifyGitCommitCommand", () => {
     };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
@@ -113,7 +113,7 @@ describe("modifyGitCommitCommand", () => {
     };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
@@ -152,7 +152,7 @@ describe("modifyGitCommitCommand", () => {
     const trailers = { "Session": "abc" };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
@@ -178,7 +178,7 @@ describe("modifyGitCommitCommand", () => {
     const trailers = { "Session": "abc123" };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
@@ -194,7 +194,7 @@ describe("modifyGitCommitCommand", () => {
     const trailers = { "Model": "test-model" };
 
     const modifiedCommand = modifyGitCommitCommand(originalCommand, trailers);
-    execSync(modifiedCommand, { cwd: testRepo });
+    execSync(modifiedCommand, { cwd: testRepo, shell: '/bin/bash' });
 
     const commitMessage = execSync("git log -1 --format=%B", {
       cwd: testRepo,
