@@ -1,5 +1,10 @@
 # opencode-git-trailers
 
+[![CI](https://github.com/lannuttia/opencode-git-trailers/actions/workflows/ci.yml/badge.svg)](https://github.com/lannuttia/opencode-git-trailers/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/lannuttia/opencode-git-trailers/graph/badge.svg)](https://codecov.io/gh/lannuttia/opencode-git-trailers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/lannuttia/opencode-git-trailers/blob/main/LICENSE)
+[![Snyk Vulnerabilities](https://snyk.io/test/github/lannuttia/opencode-git-trailers/badge.svg)](https://security.snyk.io/package/npm/opencode-git-trailers)
+
 OpenCode plugin that automatically adds git trailers to commits made through OpenCode.
 
 ## Problem
