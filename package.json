@@ -1,6 +1,6 @@
 {
   "name": "opencode-git-trailers",
-  "version": "0.1.0",
+  "version": "0.1.1-0",
   "description": "OpenCode plugin for managing git trailers",
   "type": "module",
   "main": "./dist/index.js",
