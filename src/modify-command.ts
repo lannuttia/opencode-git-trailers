@@ -13,6 +13,7 @@ export function escapeForAnsiCQuotes(str: string): string {
     .replace(/\n/g, "\\n")      // Convert newlines to \n escape sequence
     .replace(/\r/g, "\\r")      // Convert carriage returns to \r escape sequence
     .replace(/\t/g, "\\t")      // Convert tabs to \t escape sequence
+    // eslint-disable-next-line no-control-regex
     .replace(/\x00/g, "\\x00"); // Convert null bytes to \x00 escape sequence
 }
 

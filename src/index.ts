@@ -12,7 +12,7 @@ const plugin: Plugin = async (input) => {
   let currentProvider: string | undefined;
 
   return {
-    "chat.params": async (hookInput, output) => {
+    "chat.params": async (hookInput) => {
       // Capture model and provider from chat parameters
       try {
         if (hookInput.model?.id) {
@@ -21,7 +21,7 @@ const plugin: Plugin = async (input) => {
         if (hookInput.provider?.info?.name) {
           currentProvider = hookInput.provider.info.name;
         }
-      } catch (error) {
+      } catch {
         // Silently ignore errors in capturing model/provider
       }
     },
@@ -39,7 +39,8 @@ const plugin: Plugin = async (input) => {
         }
 
         // Read git trailer configuration
-        const cwd: string = (output.args?.workdir as string | undefined) || input.directory;
+        const workdir = output.args?.workdir;
+        const cwd: string = (typeof workdir === 'string' ? workdir : undefined) || input.directory;
         const trailerConfig: Record<string, string> = await readGitTrailers(input.$, cwd);
 
         if (Object.keys(trailerConfig).length === 0) {
@@ -62,7 +63,7 @@ const plugin: Plugin = async (input) => {
           allVariables
         );
         
-        const modifiedCommand: string = modifyGitCommitCommand(command as string, trailers);
+        const modifiedCommand: string = modifyGitCommitCommand(command, trailers);
 
         output.args.command = modifiedCommand;
       } catch (error) {

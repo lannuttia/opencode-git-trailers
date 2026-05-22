@@ -3,15 +3,31 @@
  */
 
 /**
+ * Shell expression types accepted by Bun's shell API.
+ */
+export type ShellExpression =
+  | { toString(): string }
+  | Array<ShellExpression>
+  | string
+  | { raw: string }
+  | ReadableStream;
+
+/**
+ * Chainable shell command interface returned by ShellAPI.
+ */
+export interface ShellChain {
+  cwd(dir: string): ShellChain;
+  nothrow(): ShellChain;
+  quiet(): ShellChain;
+  text(): Promise<string>;
+}
+
+/**
  * OpenCode's shell API for executing shell commands.
+ * The values parameter accepts the same types as Bun's shell API.
  */
 export type ShellAPI = {
-  (strings: TemplateStringsArray, ...values: any[]): {
-    cwd(dir: string): any;
-    nothrow(): any;
-    quiet(): any;
-    text(): Promise<string>;
-  };
+  (strings: TemplateStringsArray, ...values: ShellExpression[]): ShellChain;
 };
 
 /**

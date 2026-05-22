@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { PluginInput } from "@opencode-ai/plugin";
-import { $ } from "bun";
 
 vi.mock("bun", () => ({
   $: vi.fn(),

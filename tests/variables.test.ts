@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
 import { getUserVariables, buildContextVariables } from "../src/variables.js";
-import { $ } from "bun";
 
 vi.mock("bun", () => ({
   $: vi.fn(),

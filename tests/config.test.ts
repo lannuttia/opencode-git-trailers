@@ -128,8 +128,10 @@ describe("readGitTrailers", () => {
 
   it("should skip malformed config lines without spaces", async () => {
     // Create a mock shell that returns malformed output
-    const mockShellWithMalformed = (strings: TemplateStringsArray, ...values: any[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const mockShellWithMalformed = (strings: TemplateStringsArray, ...values: unknown[]) => {
       const chainable = {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         cwd(dir: string) {
           return chainable;
         },
