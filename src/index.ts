@@ -1,7 +1,7 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { readGitTrailers } from "./config.js";
 import { isGitCommitCommand } from "./git-commit.js";
-import { modifyGitCommitCommand } from "./modify-command.js";
+import { appendTrailersToCommand } from "./modify-command.js";
 import { buildTrailers } from "./trailers.js";
 import { getUserVariables, buildContextVariables } from "./variables.js";
 import type { Variables } from "./types.js";
@@ -63,7 +63,7 @@ const plugin: Plugin = async (input) => {
           allVariables
         );
         
-        const modifiedCommand: string = modifyGitCommitCommand(command, trailers);
+        const modifiedCommand: string = appendTrailersToCommand(command, trailers);
 
         output.args.command = modifiedCommand;
       } catch (error) {
