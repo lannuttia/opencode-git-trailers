@@ -271,7 +271,7 @@ describe("opencode-git-trailers", () => {
       };
 
       // Should not throw
-      await expect(hooks["chat.params"]!(chatInput, chatOutput)).resolves.not.toThrow();
+      await hooks["chat.params"]!(chatInput, chatOutput);
     }
 
     const hookFn = hooks["tool.execute.before"];
@@ -344,7 +344,7 @@ describe("opencode-git-trailers", () => {
       };
 
       // Should not throw
-      await expect(hooks["chat.params"]!(chatInput, chatOutput)).resolves.not.toThrow();
+      await hooks["chat.params"]!(chatInput, chatOutput);
     }
 
     const hookFn = hooks["tool.execute.before"];
@@ -420,6 +420,9 @@ describe("opencode-git-trailers", () => {
   });
 
   it("should gracefully handle errors without breaking commits", async () => {
+    // Mock console.error to suppress expected error output during test
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
     const mockShellChain = {
       text: vi.fn().mockRejectedValue(new Error("Git config failed")),
       quiet: vi.fn(),
@@ -460,9 +463,18 @@ describe("opencode-git-trailers", () => {
       },
     };
 
-    await expect(hookFn!(hookInput, output)).resolves.not.toThrow();
+    await hookFn!(hookInput, output);
     
     // Command should remain unchanged when error occurs
     expect(output.args.command).toBe('git commit -m "test commit"');
+    
+    // Verify that console.error was called with the expected message
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "opencode-git-trailers: Error processing trailers:",
+      expect.any(Error)
+    );
+    
+    // Restore console.error
+    consoleErrorSpy.mockRestore();
   });
 });
