@@ -4,7 +4,7 @@ import { isGitCommitCommand } from "./git-commit.js";
 import { modifyGitCommitCommand } from "./modify-command.js";
 import { buildTrailers } from "./trailers.js";
 import { getUserVariables, buildContextVariables } from "./variables.js";
-import type { Variables } from "./interpolate.js";
+import type { Variables } from "./types.js";
 
 const plugin: Plugin = async (input) => {
   // Store model/provider in closure to access across hooks

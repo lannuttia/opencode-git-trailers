@@ -1,11 +1,4 @@
-type ShellAPI = {
-  (strings: TemplateStringsArray, ...values: any[]): {
-    cwd(dir: string): any;
-    nothrow(): any;
-    quiet(): any;
-    text(): Promise<string>;
-  };
-};
+import type { ShellAPI } from "./types.js";
 
 const TRAILER_PREFIX = "opencode.git-trailers.";
 

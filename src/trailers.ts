@@ -1,4 +1,5 @@
-import { interpolateVariables, type Variables } from "./interpolate.js";
+import { interpolateVariables } from "./interpolate.js";
+import type { Variables } from "./types.js";
 
 /**
  * Formats trailers into git trailer format.

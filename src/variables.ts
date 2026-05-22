@@ -1,13 +1,4 @@
-import type { Variables } from "./interpolate.js";
-
-type ShellAPI = {
-  (strings: TemplateStringsArray, ...values: any[]): {
-    cwd(dir: string): any;
-    nothrow(): any;
-    quiet(): any;
-    text(): Promise<string>;
-  };
-};
+import type { ShellAPI, Variables } from "./types.js";
 
 /**
  * Retrieves user variables from git config.

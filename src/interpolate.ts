@@ -1,4 +1,4 @@
-export type Variables = Record<string, string | undefined>;
+import type { Variables } from "./types.js";
 
 /**
  * Interpolates variables into a template string.
