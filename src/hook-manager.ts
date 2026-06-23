@@ -4,10 +4,12 @@
 export class CommitHookManager implements Disposable {
   private readonly repoPath: string;
   private readonly trailers: Record<string, string>;
+  private readonly existingHookPath?: string;
 
-  constructor(repoPath: string, trailers: Record<string, string>) {
+  constructor(repoPath: string, trailers: Record<string, string>, existingHookPath?: string) {
     this.repoPath = repoPath;
     this.trailers = trailers;
+    this.existingHookPath = existingHookPath;
   }
 
   generateHookScript(): string {
@@ -18,9 +20,13 @@ export class CommitHookManager implements Disposable {
       trailerArgs.push(`--trailer "${formattedKey}: ${value}"`);
     }
     
-    const script: string = `#!/bin/sh
-git interpret-trailers ${trailerArgs.join(" ")} --in-place "$1"
-`;
+    let script: string = "#!/bin/sh\n";
+    
+    if (this.existingHookPath) {
+      script += `${this.existingHookPath} "$1"\n`;
+    }
+    
+    script += `git interpret-trailers ${trailerArgs.join(" ")} --in-place "$1"\n`;
     
     return script;
   }
