@@ -1,4 +1,4 @@
-import { writeFileSync, chmodSync, unlinkSync, existsSync, copyFileSync, renameSync } from "fs";
+import { writeFileSync, unlinkSync, existsSync, copyFileSync, renameSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
 import { randomBytes } from "crypto";
