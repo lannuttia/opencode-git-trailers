@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CommitHookManager } from "../src/hook-manager.js";
 import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "fs";
 import { join } from "path";
+import { execSync } from "child_process";
 
 describe("CommitHookManager", () => {
   describe("Disposable pattern", () => {
@@ -10,6 +11,37 @@ describe("CommitHookManager", () => {
       
       expect(manager[Symbol.dispose]).toBeDefined();
       expect(typeof manager[Symbol.dispose]).toBe("function");
+    });
+  });
+
+  describe("resolveHooksDir integration", () => {
+    const testRepoPath: string = "/tmp/opencode/test-repo-resolve-hooks";
+
+    beforeEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+      mkdirSync(testRepoPath, { recursive: true });
+      // Initialize as a real git repository
+      execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+    });
+
+    afterEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+    });
+
+    it("should resolve hooks directory from real git repo without errors", () => {
+      // Creating a manager should call resolveHooksDir which runs git rev-parse
+      // This should work without errors since we initialized a real git repo
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "test": "value"
+      });
+
+      // Verify the manager was created successfully
+      expect(manager).toBeDefined();
+      expect(manager.generateHookScript()).toContain("git interpret-trailers");
     });
   });
 
@@ -61,8 +93,9 @@ describe("CommitHookManager", () => {
       if (existsSync(testRepoPath)) {
         rmSync(testRepoPath, { recursive: true, force: true });
       }
-      // Create fresh test directory structure
-      mkdirSync(hooksDir, { recursive: true });
+      // Create fresh test directory and initialize as git repo
+      mkdirSync(testRepoPath, { recursive: true });
+      execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
     });
 
     afterEach(() => {
@@ -163,7 +196,8 @@ describe("CommitHookManager", () => {
       if (existsSync(testRepoPath)) {
         rmSync(testRepoPath, { recursive: true, force: true });
       }
-      mkdirSync(hooksDir, { recursive: true });
+      mkdirSync(testRepoPath, { recursive: true });
+      execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
     });
 
     afterEach(() => {
