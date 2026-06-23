@@ -1,11 +1,44 @@
 # opencode-git-trailers
 
+[![npm version](https://img.shields.io/npm/v/opencode-git-trailers.svg)](https://www.npmjs.com/package/opencode-git-trailers)
+[![npm downloads](https://img.shields.io/npm/dm/opencode-git-trailers.svg)](https://www.npmjs.com/package/opencode-git-trailers)
 [![CI](https://github.com/lannuttia/opencode-git-trailers/actions/workflows/ci.yml/badge.svg)](https://github.com/lannuttia/opencode-git-trailers/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/lannuttia/opencode-git-trailers/graph/badge.svg)](https://codecov.io/gh/lannuttia/opencode-git-trailers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/lannuttia/opencode-git-trailers/blob/main/LICENSE)
 [![Snyk Vulnerabilities](https://snyk.io/test/github/lannuttia/opencode-git-trailers/badge.svg)](https://security.snyk.io/package/npm/opencode-git-trailers)
 
-OpenCode plugin that automatically adds git trailers to commits made through OpenCode.
+> **Automatically track AI contributions in your git history with standardized trailers**
+> 
+> Perfect for teams requiring compliance, audit trails, or transparency in AI-assisted development.
+
+## Quick Start
+
+```bash
+npm install opencode-git-trailers
+```
+
+Add to your OpenCode config:
+```json
+{
+  "plugins": ["opencode-git-trailers"]
+}
+```
+
+Configure your preferred trailers:
+```bash
+git config --global opencode.trailer.model '{{model}}'
+git config --global opencode.trailer.co-authored-by 'AI Assistant <ai@opencode.ai>'
+```
+
+**Done!** All commits through OpenCode will now include these trailers.
+
+## Use Cases
+
+- **Compliance**: Automatically tag AI-assisted commits for audit requirements
+- **Attribution**: Track which AI models contributed to your codebase
+- **Team Transparency**: Make AI assistance visible in git history
+- **Debugging**: Trace issues back to specific AI model versions
+- **Analytics**: Analyze AI contribution patterns across your project
 
 ## Problem
 

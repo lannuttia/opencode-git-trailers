@@ -1,7 +1,7 @@
 {
   "name": "opencode-git-trailers",
   "version": "0.1.4",
-  "description": "OpenCode plugin for managing git trailers",
+  "description": "Automatically add standardized git trailers to AI-assisted commits for compliance, audit trails, and attribution",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -48,14 +48,22 @@
     "git",
     "git-trailers",
     "commit",
+    "commit-message",
     "metadata",
     "ai",
+    "ai-assisted",
     "coding-assistant",
     "plugin",
     "automation",
     "developer-tools",
     "compliance",
-    "audit-trail"
+    "audit-trail",
+    "git-hooks",
+    "commit-msg",
+    "signed-off-by",
+    "co-authored-by",
+    "llm",
+    "ai-transparency"
   ],
   "dependencies": {}
 }
