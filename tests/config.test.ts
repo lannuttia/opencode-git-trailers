@@ -159,65 +159,11 @@ describe("readGitTrailers", () => {
   });
 
   it("should read git trailers with new opencode.trailer prefix", async () => {
-    const newPrefixRepo = mkdtempSync(join(tmpdir(), "git-trailers-new-prefix-"));
-    execSync("git init", { cwd: newPrefixRepo });
-    execSync('git config user.name "Test User"', { cwd: newPrefixRepo });
-    execSync('git config user.email "test@example.com"', { cwd: newPrefixRepo });
-    
-    // Set up test trailers with new singular prefix
-    execSync('git config opencode.trailer.model "{{model}}"', { cwd: newPrefixRepo });
-    execSync('git config opencode.trailer.coding-agent "OpenCode"', { cwd: newPrefixRepo });
-
-    // Create a mock shell that uses the new prefix
-    const mockShellNewPrefix = (strings: TemplateStringsArray, ...values: any[]) => {
-      const command = strings.reduce((acc, str, i) => {
-        return acc + str + (values[i] || "");
-      }, "");
-
-      let currentCwd = newPrefixRepo;
-      let shouldThrow = true;
-      let isQuiet = false;
-
-      const chainable = {
-        cwd(dir: string) {
-          currentCwd = dir;
-          return chainable;
-        },
-        nothrow() {
-          shouldThrow = false;
-          return chainable;
-        },
-        quiet() {
-          isQuiet = true;
-          return chainable;
-        },
-        async text(): Promise<string> {
-          try {
-            const result = execSync(command, {
-              cwd: currentCwd,
-              encoding: "utf-8",
-              stdio: isQuiet ? ["pipe", "pipe", "pipe"] : undefined,
-            });
-            return result;
-          } catch (error: any) {
-            if (shouldThrow) {
-              throw error;
-            }
-            return "";
-          }
-        },
-      };
-
-      return chainable;
-    };
-    
-    const trailers = await readGitTrailers(mockShellNewPrefix, newPrefixRepo);
+    const trailers = await readGitTrailers(mockShell, testRepo);
     
     expect(trailers).toEqual({
       model: "{{model}}",
       "coding-agent": "OpenCode",
     });
-    
-    rmSync(newPrefixRepo, { recursive: true, force: true });
   });
 });
