@@ -13,7 +13,7 @@ Some projects require commits created with AI assistance to include metadata den
 
 ## What It Does
 
-This plugin intercepts `git commit` commands invoked by OpenCode and automatically appends configured trailers to the commit message. Trailers are added to the end of the commit message following the [git trailer format](https://git-scm.com/docs/git-interpret-trailers).
+This plugin creates a temporary git commit-msg hook that automatically appends configured trailers to commit messages using `git interpret-trailers`. The hook is installed before commits made through OpenCode and automatically cleaned up afterward. Trailers are added to the end of the commit message following the [git trailer format](https://git-scm.com/docs/git-interpret-trailers).
 
 ## Installation
 
@@ -35,49 +35,64 @@ Add the plugin to your OpenCode configuration:
 
 ### Configuration
 
-Configure trailers using git config with the `opencode.git-trailers` prefix.
+This plugin uses a hybrid approach combining OpenCode-specific configuration with Git's standard trailer system:
 
-#### Global Configuration
+1. **`opencode.git-trailers.*`** - Specifies which trailers to add and their value templates
+2. **`trailer.*` (optional)** - Git's standard trailer config for controlling key formatting
 
-Configure trailers globally to apply to all repositories:
+#### Quick Start (Minimal Setup)
 
 ```bash
-# Add the model used for the commit
+# Add trailers with default (lowercase) formatting
 git config --global opencode.git-trailers.model '{{model}}'
-
-# Add yourself as a co-author with the AI
 git config --global opencode.git-trailers.co-authored-by 'AI Assistant <ai@opencode.ai>'
+```
 
-# Add a signed-off-by trailer
+Result:
+```
+model: claude-sonnet-4-5@20250929
+co-authored-by: AI Assistant <ai@opencode.ai>
+```
+
+#### Recommended Setup (With Proper Capitalization)
+
+For properly capitalized trailer keys, combine OpenCode config with Git's standard trailer formatting:
+
+```bash
+# Define trailer key formatting (standard Git config)
+git config --global trailer.model.key "Model"
+git config --global trailer.co-authored-by.key "Co-authored-by"
+git config --global trailer.signed-off-by.key "Signed-off-by"
+
+# Specify which trailers OpenCode should add (OpenCode-specific config)
+git config --global opencode.git-trailers.model '{{model}}'
+git config --global opencode.git-trailers.co-authored-by 'AI Assistant <ai@opencode.ai>'
 git config --global opencode.git-trailers.signed-off-by '{{user.name}} <{{user.email}}>'
 ```
 
-#### Per-Repository Configuration
-
-Configure trailers for a specific repository by running commands within the repository directory:
-
-```bash
-# Navigate to your repository
-cd /path/to/your/repo
-
-# Add the model used for the commit (repository-specific)
-git config opencode.git-trailers.model '{{model}}'
-
-# Add a signed-off-by trailer (repository-specific)
-git config opencode.git-trailers.signed-off-by '{{user.name}} <{{user.email}}>'
-```
-
-Per-repository configuration overrides global configuration for the same trailer key.
-
-#### Result
-
-These configuration options result in the following trailers being added to commits:
-
+Result:
 ```
 Model: claude-sonnet-4-5@20250929
 Co-authored-by: AI Assistant <ai@opencode.ai>
 Signed-off-by: John Doe <john@example.com>
 ```
+
+#### Per-Repository Configuration
+
+Configure trailers for a specific repository by running commands within the repository directory (omit `--global` flag):
+
+```bash
+# Navigate to your repository
+cd /path/to/your/repo
+
+# Define formatting
+git config trailer.model.key "Model"
+
+# Specify what to add
+git config opencode.git-trailers.model '{{model}}'
+```
+
+Per-repository configuration overrides global configuration for the same trailer key.
 
 ### Variable Interpolation
 
@@ -99,6 +114,45 @@ git config opencode.git-trailers.signed-off-by '{{user.name}} <{{user.email}}>'
 - `{{session}}` - OpenCode session ID
 - `{{user.name}}` - Git user name from git config
 - `{{user.email}}` - Git user email from git config
+
+### How It Works
+
+The plugin uses a two-step configuration system:
+
+1. **OpenCode Configuration** (`opencode.git-trailers.*`):
+   - Determines **which** trailers are added to OpenCode commits
+   - Provides **value templates** with variable interpolation (e.g., `{{model}}`)
+   - **Required** for trailers to be added
+
+2. **Git Trailer Configuration** (`trailer.*.key`, optional):
+   - Controls **how** trailer keys are formatted in the commit message
+   - If present, Git formats the trailer key according to this setting
+   - If absent, the key-alias from `opencode.git-trailers.*` is used as-is (lowercase)
+
+**Example:**
+```bash
+# The config key name creates the association:
+git config trailer.model.key "Model"           # ← Formats "model" as "Model"
+git config opencode.git-trailers.model '{{model}}'  # ← Adds trailer "model"
+```
+
+When OpenCode makes a commit, it generates: `--trailer "model:claude-4"`  
+Git interpret-trailers formats it as: `Model: claude-4`
+
+### Upgrading from Previous Versions
+
+**Version 0.1.3 and earlier** automatically capitalized the first letter of trailer keys.  
+**Version 0.1.4+** relies on Git's standard `trailer.*.key` configuration for formatting.
+
+If upgrading, your trailers will appear in lowercase unless you add `trailer.*.key` configuration:
+
+```bash
+# For each trailer, add the corresponding formatting config
+git config --global trailer.model.key "Model"
+git config --global trailer.session.key "Session"
+git config --global trailer.co-authored-by.key "Co-authored-by"
+git config --global trailer.signed-off-by.key "Signed-off-by"
+```
 
 ### Example Commit Message
 
