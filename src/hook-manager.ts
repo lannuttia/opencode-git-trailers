@@ -1,5 +1,30 @@
 import { writeFileSync, chmodSync, unlinkSync, existsSync } from "fs";
 import { join } from "path";
+import { execSync } from "child_process";
+
+/**
+ * Resolves the git hooks directory using git rev-parse.
+ * @param repoPath - Path to the repository
+ * @returns Absolute path to the hooks directory
+ */
+function resolveHooksDir(repoPath: string): string {
+  try {
+    const hooksDir: string = execSync("git rev-parse --git-path hooks", {
+      cwd: repoPath,
+      encoding: "utf-8",
+    }).trim();
+    
+    // If the path is relative, join it with repoPath
+    if (!hooksDir.startsWith("/")) {
+      return join(repoPath, hooksDir);
+    }
+    
+    return hooksDir;
+  } catch {
+    // Fallback to standard location if git command fails
+    return join(repoPath, ".git", "hooks");
+  }
+}
 
 /**
  * Manages temporary git commit-msg hooks with automatic cleanup via Disposable pattern.
@@ -15,7 +40,8 @@ export class CommitHookManager implements Disposable {
     this.repoPath = repoPath;
     this.trailers = trailers;
     this.existingHookPath = existingHookPath;
-    this.hookPath = join(repoPath, ".git", "hooks", "commit-msg");
+    const hooksDir: string = resolveHooksDir(repoPath);
+    this.hookPath = join(hooksDir, "commit-msg");
     this.installed = false;
   }
 
