@@ -127,7 +127,7 @@ The plugin uses a two-step configuration system:
 2. **Git Trailer Configuration** (`trailer.*.key`, optional):
    - Controls **how** trailer keys are formatted in the commit message
    - If present, Git formats the trailer key according to this setting
-   - If absent, the key-alias from `opencode.trailers.*` is used as-is (lowercase)
+   - If absent, the key from `opencode.trailers.*` is passed to `git interpret-trailers` as-is, which formats it according to Git's default trailer rules
 
 **Example:**
 ```bash
@@ -138,6 +138,20 @@ git config opencode.trailers.model '{{model}}'  # ← Adds trailer "model"
 
 When OpenCode makes a commit, it generates: `--trailer "model:claude-4"`  
 Git interpret-trailers formats it as: `Model: claude-4`
+
+### Additional Features
+
+#### Hook Chaining
+
+If your repository already has a `commit-msg` hook, this plugin will preserve and chain to it. The existing hook runs first, then the trailers are added. When the commit completes, your original hook is restored.
+
+#### Graceful Error Handling
+
+If the plugin encounters an error (e.g., unable to create the hook file), it logs the error but allows the commit to proceed without trailers. This ensures the plugin never blocks your commits.
+
+#### Variable Filtering
+
+Trailers with undefined or uninterpolated variables are automatically filtered out. For example, if `{{provider}}` is not available, a trailer configured as `provider: {{provider}}` will not be added to the commit.
 
 ### Upgrading from Previous Versions
 
