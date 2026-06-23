@@ -14,7 +14,7 @@ describe("CommitHookManager", () => {
   });
 
   describe("generateHookScript", () => {
-    it("should generate script with git interpret-trailers command", () => {
+    it("should generate script with git interpret-trailers command using key:value format", () => {
       const manager: CommitHookManager = new CommitHookManager("/test/repo", {
         "session": "test-session-123",
         "model": "claude-sonnet-4-5"
@@ -24,8 +24,8 @@ describe("CommitHookManager", () => {
 
       expect(script).toContain("#!/bin/sh");
       expect(script).toContain("git interpret-trailers");
-      expect(script).toContain("--trailer \"Session: test-session-123\"");
-      expect(script).toContain("--trailer \"Model: claude-sonnet-4-5\"");
+      expect(script).toContain("--trailer \"session:test-session-123\"");
+      expect(script).toContain("--trailer \"model:claude-sonnet-4-5\"");
     });
 
     it("should chain to existing commit-msg hook if present", () => {
@@ -83,7 +83,7 @@ describe("CommitHookManager", () => {
       const content: string = readFileSync(hookPath, "utf-8");
       expect(content).toContain("#!/bin/sh");
       expect(content).toContain("git interpret-trailers");
-      expect(content).toContain("Session: test-123");
+      expect(content).toContain("session:test-123");
     });
 
     it("should make hook file executable", () => {

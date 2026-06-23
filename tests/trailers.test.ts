@@ -3,29 +3,29 @@ import { buildTrailers, formatTrailers } from "../src/trailers.js";
 
 describe("trailers", () => {
   describe("formatTrailers", () => {
-    it("should format trailers in git trailer format", () => {
+    it("should format trailers in git trailer format without capitalization", () => {
       const trailers = {
         "model": "claude-sonnet-4-5",
         "co-authored-by": "AI Assistant <ai@opencode.ai>",
       };
       const formatted = formatTrailers(trailers);
-      expect(formatted).toBe("Model: claude-sonnet-4-5\nCo-authored-by: AI Assistant <ai@opencode.ai>");
+      expect(formatted).toBe("model: claude-sonnet-4-5\nco-authored-by: AI Assistant <ai@opencode.ai>");
     });
 
     it("should return empty string for empty trailers", () => {
       expect(formatTrailers({})).toBe("");
     });
 
-    it("should capitalize first letter of trailer keys", () => {
+    it("should preserve trailer key casing exactly as provided", () => {
       const trailers = {
         "session": "abc123",
         "timestamp": "2024-01-01T00:00:00Z",
       };
       const formatted = formatTrailers(trailers);
-      expect(formatted).toBe("Session: abc123\nTimestamp: 2024-01-01T00:00:00Z");
+      expect(formatted).toBe("session: abc123\ntimestamp: 2024-01-01T00:00:00Z");
     });
 
-    it("should handle trailer keys that are already capitalized", () => {
+    it("should preserve capitalized trailer keys as-is", () => {
       const trailers = {
         "Model": "claude-sonnet-4-5",
       };
@@ -33,13 +33,13 @@ describe("trailers", () => {
       expect(formatted).toBe("Model: claude-sonnet-4-5");
     });
 
-    it("should handle hyphenated keys correctly", () => {
+    it("should preserve hyphenated keys without modification", () => {
       const trailers = {
         "co-authored-by": "Test User",
         "signed-off-by": "Another User",
       };
       const formatted = formatTrailers(trailers);
-      expect(formatted).toBe("Co-authored-by: Test User\nSigned-off-by: Another User");
+      expect(formatted).toBe("co-authored-by: Test User\nsigned-off-by: Another User");
     });
 
     it("should handle special characters in values", () => {
@@ -47,7 +47,7 @@ describe("trailers", () => {
         "message": "Value with: colons, commas, and\nnewlines",
       };
       const formatted = formatTrailers(trailers);
-      expect(formatted).toBe("Message: Value with: colons, commas, and\nnewlines");
+      expect(formatted).toBe("message: Value with: colons, commas, and\nnewlines");
     });
 
     it("should handle single trailer", () => {
@@ -55,7 +55,7 @@ describe("trailers", () => {
         "model": "test-model",
       };
       const formatted = formatTrailers(trailers);
-      expect(formatted).toBe("Model: test-model");
+      expect(formatted).toBe("model: test-model");
     });
   });
 

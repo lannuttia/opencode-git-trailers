@@ -3,15 +3,14 @@ import type { Variables } from "./types.js";
 
 /**
  * Formats trailers into git trailer format.
- * Each trailer is formatted as "Key: value" with the key capitalized.
+ * Each trailer is formatted as "key: value" preserving the original key casing.
  * @param trailers - Record of trailer key-value pairs
  * @returns Formatted trailers joined by newlines
  */
 export function formatTrailers(trailers: Record<string, string>): string {
   const entries: string[] = [];
   for (const [key, value] of Object.entries(trailers)) {
-    const formattedKey: string = key.charAt(0).toUpperCase() + key.slice(1);
-    entries.push(`${formattedKey}: ${value}`);
+    entries.push(`${key}: ${value}`);
   }
   return entries.join("\n");
 }
