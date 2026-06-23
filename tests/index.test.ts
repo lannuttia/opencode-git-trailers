@@ -1,5 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { PluginInput } from "@opencode-ai/plugin";
+import { mkdirSync, rmSync, existsSync } from "fs";
+import { execSync } from "child_process";
 
 vi.mock("bun", () => ({
   $: vi.fn(),
@@ -8,8 +10,23 @@ vi.mock("bun", () => ({
 import plugin from "../src/index.js";
 
 describe("opencode-git-trailers", () => {
+  const testRepoPath: string = "/tmp/opencode/test-repo-index";
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Create a real git repository for tests that need it
+    if (existsSync(testRepoPath)) {
+      rmSync(testRepoPath, { recursive: true, force: true });
+    }
+    mkdirSync(testRepoPath, { recursive: true });
+    execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+  });
+
+  afterEach(() => {
+    // Clean up test repository
+    if (existsSync(testRepoPath)) {
+      rmSync(testRepoPath, { recursive: true, force: true });
+    }
   });
 
   it("should export a plugin function", () => {
@@ -56,8 +73,8 @@ describe("opencode-git-trailers", () => {
     const mockInput: PluginInput = {
       client: {} as any,
       project: {} as any,
-      directory: "/test/dir",
-      worktree: "/test/worktree",
+      directory: testRepoPath,
+      worktree: testRepoPath,
       experimental_workspace: { register: vi.fn() },
       serverUrl: new URL("http://localhost"),
       $: mockShell as any,
@@ -174,8 +191,8 @@ describe("opencode-git-trailers", () => {
     const mockInput: PluginInput = {
       client: {} as any,
       project: {} as any,
-      directory: "/test/dir",
-      worktree: "/test/worktree",
+      directory: testRepoPath,
+      worktree: testRepoPath,
       experimental_workspace: { register: vi.fn() },
       serverUrl: new URL("http://localhost"),
       $: mockShell as any,
