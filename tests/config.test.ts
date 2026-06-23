@@ -17,8 +17,8 @@ describe("readGitTrailers", () => {
     execSync('git config user.email "test@example.com"', { cwd: testRepo });
     
     // Set up test trailers
-    execSync('git config opencode.git-trailers.model "{{model}}"', { cwd: testRepo });
-    execSync('git config opencode.git-trailers.coding-agent "OpenCode"', { cwd: testRepo });
+    execSync('git config opencode.trailers.model "{{model}}"', { cwd: testRepo });
+    execSync('git config opencode.trailers.coding-agent "OpenCode"', { cwd: testRepo });
 
     // Create a mock shell API that calls real git
     mockShell = (strings: TemplateStringsArray, ...values: any[]) => {
@@ -90,30 +90,30 @@ describe("readGitTrailers", () => {
   });
 
   it("should handle trailer keys with hyphens", async () => {
-    execSync('git config opencode.git-trailers.co-authored-by "{{user.name}}"', { cwd: testRepo });
+    execSync('git config opencode.trailers.co-authored-by "{{user.name}}"', { cwd: testRepo });
     
     const trailers = await readGitTrailers(mockShell, testRepo);
     
     expect(trailers).toHaveProperty("co-authored-by", "{{user.name}}");
     
     // Clean up
-    execSync('git config --unset opencode.git-trailers.co-authored-by', { cwd: testRepo });
+    execSync('git config --unset opencode.trailers.co-authored-by', { cwd: testRepo });
   });
 
   it("should handle trailer values with spaces", async () => {
-    execSync('git config opencode.git-trailers.message "A message with spaces"', { cwd: testRepo });
+    execSync('git config opencode.trailers.message "A message with spaces"', { cwd: testRepo });
     
     const trailers = await readGitTrailers(mockShell, testRepo);
     
     expect(trailers).toHaveProperty("message", "A message with spaces");
     
     // Clean up
-    execSync('git config --unset opencode.git-trailers.message', { cwd: testRepo });
+    execSync('git config --unset opencode.trailers.message', { cwd: testRepo });
   });
 
   it("should handle multiple trailer configurations", async () => {
-    execSync('git config opencode.git-trailers.session "{{session}}"', { cwd: testRepo });
-    execSync('git config opencode.git-trailers.timestamp "{{timestamp}}"', { cwd: testRepo });
+    execSync('git config opencode.trailers.session "{{session}}"', { cwd: testRepo });
+    execSync('git config opencode.trailers.timestamp "{{timestamp}}"', { cwd: testRepo });
     
     const trailers = await readGitTrailers(mockShell, testRepo);
     
@@ -122,8 +122,8 @@ describe("readGitTrailers", () => {
     expect(trailers).toHaveProperty("timestamp", "{{timestamp}}");
     
     // Clean up
-    execSync('git config --unset opencode.git-trailers.session', { cwd: testRepo });
-    execSync('git config --unset opencode.git-trailers.timestamp', { cwd: testRepo });
+    execSync('git config --unset opencode.trailers.session', { cwd: testRepo });
+    execSync('git config --unset opencode.trailers.timestamp', { cwd: testRepo });
   });
 
   it("should skip malformed config lines without spaces", async () => {
@@ -143,7 +143,7 @@ describe("readGitTrailers", () => {
         },
         async text(): Promise<string> {
           // Return output with valid and malformed lines
-          return "opencode.git-trailers.model {{model}}\nmalformedline\nopencode.git-trailers.session {{session}}";
+          return "opencode.trailers.model {{model}}\nmalformedline\nopencode.trailers.session {{session}}";
         },
       };
       return chainable;
