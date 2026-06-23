@@ -34,6 +34,7 @@ export class CommitHookManager implements Disposable {
   private readonly trailers: Record<string, string>;
   private readonly existingHookPath?: string;
   private readonly hookPath: string;
+  private readonly backupPath: string;
   private installed: boolean;
 
   constructor(repoPath: string, trailers: Record<string, string>, existingHookPath?: string) {
@@ -42,6 +43,7 @@ export class CommitHookManager implements Disposable {
     this.existingHookPath = existingHookPath;
     const hooksDir: string = resolveHooksDir(repoPath);
     this.hookPath = join(hooksDir, "commit-msg");
+    this.backupPath = `${this.hookPath}.backup`;
     this.installed = false;
   }
 
@@ -56,8 +58,7 @@ export class CommitHookManager implements Disposable {
     let script: string = "#!/bin/sh\n";
     
     if (this.existingHookPath) {
-      const backupPath: string = `${this.hookPath}.backup`;
-      script += `${backupPath} "$1"\n`;
+      script += `${this.backupPath} "$1"\n`;
     }
     
     script += `git interpret-trailers ${trailerArgs.join(" ")} --in-place "$1"\n`;
@@ -68,8 +69,7 @@ export class CommitHookManager implements Disposable {
   installHook(): void {
     // Backup existing hook if present
     if (this.existingHookPath && existsSync(this.existingHookPath)) {
-      const backupPath: string = `${this.hookPath}.backup`;
-      copyFileSync(this.existingHookPath, backupPath);
+      copyFileSync(this.existingHookPath, this.backupPath);
     }
     
     const script: string = this.generateHookScript();
@@ -79,11 +79,9 @@ export class CommitHookManager implements Disposable {
 
   [Symbol.dispose](): void {
     if (this.installed) {
-      const backupPath: string = `${this.hookPath}.backup`;
-      
       // Restore original hook if backup exists
-      if (existsSync(backupPath)) {
-        renameSync(backupPath, this.hookPath);
+      if (existsSync(this.backupPath)) {
+        renameSync(this.backupPath, this.hookPath);
       } else if (existsSync(this.hookPath)) {
         // No backup means no original hook existed
         unlinkSync(this.hookPath);
