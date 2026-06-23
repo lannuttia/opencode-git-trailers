@@ -47,7 +47,7 @@ describe("opencode-git-trailers", () => {
     mockShellChain.nothrow.mockReturnValue(mockShellChain);
     mockShellChain.quiet.mockReturnValue(mockShellChain);
     mockShellChain.text
-      .mockResolvedValueOnce("opencode.trailers.session {{session}}")
+      .mockResolvedValueOnce("opencode.trailer.session {{session}}")
       .mockResolvedValueOnce("John Doe")
       .mockResolvedValueOnce("john@example.com");
 

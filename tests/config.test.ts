@@ -17,8 +17,8 @@ describe("readGitTrailers", () => {
     execSync('git config user.email "test@example.com"', { cwd: testRepo });
     
     // Set up test trailers
-    execSync('git config opencode.trailers.model "{{model}}"', { cwd: testRepo });
-    execSync('git config opencode.trailers.coding-agent "OpenCode"', { cwd: testRepo });
+    execSync('git config opencode.trailer.model "{{model}}"', { cwd: testRepo });
+    execSync('git config opencode.trailer.coding-agent "OpenCode"', { cwd: testRepo });
 
     // Create a mock shell API that calls real git
     mockShell = (strings: TemplateStringsArray, ...values: any[]) => {
@@ -90,30 +90,30 @@ describe("readGitTrailers", () => {
   });
 
   it("should handle trailer keys with hyphens", async () => {
-    execSync('git config opencode.trailers.co-authored-by "{{user.name}}"', { cwd: testRepo });
+    execSync('git config opencode.trailer.co-authored-by "{{user.name}}"', { cwd: testRepo });
     
     const trailers = await readGitTrailers(mockShell, testRepo);
     
     expect(trailers).toHaveProperty("co-authored-by", "{{user.name}}");
     
     // Clean up
-    execSync('git config --unset opencode.trailers.co-authored-by', { cwd: testRepo });
+    execSync('git config --unset opencode.trailer.co-authored-by', { cwd: testRepo });
   });
 
   it("should handle trailer values with spaces", async () => {
-    execSync('git config opencode.trailers.message "A message with spaces"', { cwd: testRepo });
+    execSync('git config opencode.trailer.message "A message with spaces"', { cwd: testRepo });
     
     const trailers = await readGitTrailers(mockShell, testRepo);
     
     expect(trailers).toHaveProperty("message", "A message with spaces");
     
     // Clean up
-    execSync('git config --unset opencode.trailers.message', { cwd: testRepo });
+    execSync('git config --unset opencode.trailer.message', { cwd: testRepo });
   });
 
   it("should handle multiple trailer configurations", async () => {
-    execSync('git config opencode.trailers.session "{{session}}"', { cwd: testRepo });
-    execSync('git config opencode.trailers.timestamp "{{timestamp}}"', { cwd: testRepo });
+    execSync('git config opencode.trailer.session "{{session}}"', { cwd: testRepo });
+    execSync('git config opencode.trailer.timestamp "{{timestamp}}"', { cwd: testRepo });
     
     const trailers = await readGitTrailers(mockShell, testRepo);
     
@@ -122,8 +122,8 @@ describe("readGitTrailers", () => {
     expect(trailers).toHaveProperty("timestamp", "{{timestamp}}");
     
     // Clean up
-    execSync('git config --unset opencode.trailers.session', { cwd: testRepo });
-    execSync('git config --unset opencode.trailers.timestamp', { cwd: testRepo });
+    execSync('git config --unset opencode.trailer.session', { cwd: testRepo });
+    execSync('git config --unset opencode.trailer.timestamp', { cwd: testRepo });
   });
 
   it("should skip malformed config lines without spaces", async () => {
@@ -143,7 +143,7 @@ describe("readGitTrailers", () => {
         },
         async text(): Promise<string> {
           // Return output with valid and malformed lines
-          return "opencode.trailers.model {{model}}\nmalformedline\nopencode.trailers.session {{session}}";
+          return "opencode.trailer.model {{model}}\nmalformedline\nopencode.trailer.session {{session}}";
         },
       };
       return chainable;
@@ -156,5 +156,68 @@ describe("readGitTrailers", () => {
       model: "{{model}}",
       session: "{{session}}",
     });
+  });
+
+  it("should read git trailers with new opencode.trailer prefix", async () => {
+    const newPrefixRepo = mkdtempSync(join(tmpdir(), "git-trailers-new-prefix-"));
+    execSync("git init", { cwd: newPrefixRepo });
+    execSync('git config user.name "Test User"', { cwd: newPrefixRepo });
+    execSync('git config user.email "test@example.com"', { cwd: newPrefixRepo });
+    
+    // Set up test trailers with new singular prefix
+    execSync('git config opencode.trailer.model "{{model}}"', { cwd: newPrefixRepo });
+    execSync('git config opencode.trailer.coding-agent "OpenCode"', { cwd: newPrefixRepo });
+
+    // Create a mock shell that uses the new prefix
+    const mockShellNewPrefix = (strings: TemplateStringsArray, ...values: any[]) => {
+      const command = strings.reduce((acc, str, i) => {
+        return acc + str + (values[i] || "");
+      }, "");
+
+      let currentCwd = newPrefixRepo;
+      let shouldThrow = true;
+      let isQuiet = false;
+
+      const chainable = {
+        cwd(dir: string) {
+          currentCwd = dir;
+          return chainable;
+        },
+        nothrow() {
+          shouldThrow = false;
+          return chainable;
+        },
+        quiet() {
+          isQuiet = true;
+          return chainable;
+        },
+        async text(): Promise<string> {
+          try {
+            const result = execSync(command, {
+              cwd: currentCwd,
+              encoding: "utf-8",
+              stdio: isQuiet ? ["pipe", "pipe", "pipe"] : undefined,
+            });
+            return result;
+          } catch (error: any) {
+            if (shouldThrow) {
+              throw error;
+            }
+            return "";
+          }
+        },
+      };
+
+      return chainable;
+    };
+    
+    const trailers = await readGitTrailers(mockShellNewPrefix, newPrefixRepo);
+    
+    expect(trailers).toEqual({
+      model: "{{model}}",
+      "coding-agent": "OpenCode",
+    });
+    
+    rmSync(newPrefixRepo, { recursive: true, force: true });
   });
 });

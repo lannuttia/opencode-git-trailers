@@ -1,16 +1,16 @@
 import type { ShellAPI } from "./types.js";
 
-const TRAILER_PREFIX = "opencode.trailers.";
+const TRAILER_PREFIX = "opencode.trailer.";
 
 /**
  * Reads git trailer configuration from git config.
- * Looks for config keys starting with "opencode.trailers."
+ * Looks for config keys starting with "opencode.trailer."
  * @param $shell - OpenCode's shell API
  * @param cwd - Current working directory
  * @returns Record of trailer configuration key-value pairs
  */
 export async function readGitTrailers($shell: ShellAPI, cwd: string): Promise<Record<string, string>> {
-  const configOutput = await $shell`git config --get-regexp '^opencode\.trailers\.'`
+  const configOutput = await $shell`git config --get-regexp '^opencode\.trailer\.'`
     .cwd(cwd)
     .nothrow()
     .quiet()
