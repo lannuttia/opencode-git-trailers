@@ -56,7 +56,8 @@ export class CommitHookManager implements Disposable {
     let script: string = "#!/bin/sh\n";
     
     if (this.existingHookPath) {
-      script += `${this.existingHookPath} "$1"\n`;
+      const backupPath: string = `${this.hookPath}.backup`;
+      script += `${backupPath} "$1"\n`;
     }
     
     script += `git interpret-trailers ${trailerArgs.join(" ")} --in-place "$1"\n`;

@@ -36,7 +36,7 @@ describe("CommitHookManager", () => {
       const script: string = manager.generateHookScript();
 
       expect(script).toContain("#!/bin/sh");
-      expect(script).toContain("/test/repo/.git/hooks/commit-msg \"$1\"");
+      expect(script).toContain("/test/repo/.git/hooks/commit-msg.backup \"$1\"");
       expect(script).toContain("git interpret-trailers");
     });
 
