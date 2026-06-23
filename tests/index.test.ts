@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { PluginInput } from "@opencode-ai/plugin";
-import { mkdirSync, rmSync, existsSync } from "fs";
+import { mkdtempSync, rmSync, existsSync } from "fs";
 import { execSync } from "child_process";
+import { join } from "path";
+import { tmpdir } from "os";
 
 vi.mock("bun", () => ({
   $: vi.fn(),
@@ -10,15 +12,12 @@ vi.mock("bun", () => ({
 import plugin from "../src/index.js";
 
 describe("opencode-git-trailers", () => {
-  const testRepoPath: string = "/tmp/opencode/test-repo-index";
+  let testRepoPath: string;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Create a real git repository for tests that need it
-    if (existsSync(testRepoPath)) {
-      rmSync(testRepoPath, { recursive: true, force: true });
-    }
-    mkdirSync(testRepoPath, { recursive: true });
+    // Create a unique temporary git repository for each test
+    testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-index-"));
     execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
   });
 

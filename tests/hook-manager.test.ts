@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CommitHookManager } from "../src/hook-manager.js";
-import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "fs";
+import { mkdtempSync, rmSync, existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "fs";
 import { join } from "path";
+import { tmpdir } from "os";
 import { execSync } from "child_process";
 
 describe("CommitHookManager", () => {
@@ -15,14 +16,11 @@ describe("CommitHookManager", () => {
   });
 
   describe("resolveHooksDir integration", () => {
-    const testRepoPath: string = "/tmp/opencode/test-repo-resolve-hooks";
+    let testRepoPath: string;
 
     beforeEach(() => {
-      if (existsSync(testRepoPath)) {
-        rmSync(testRepoPath, { recursive: true, force: true });
-      }
-      mkdirSync(testRepoPath, { recursive: true });
-      // Initialize as a real git repository
+      // Create a unique temporary git repository for each test
+      testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-resolve-"));
       execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
     });
 
@@ -84,18 +82,16 @@ describe("CommitHookManager", () => {
   });
 
   describe("installHook", () => {
-    const testRepoPath: string = "/tmp/opencode/test-repo-hook-install";
-    const hooksDir: string = join(testRepoPath, ".git", "hooks");
-    const hookPath: string = join(hooksDir, "commit-msg");
+    let testRepoPath: string;
+    let hooksDir: string;
+    let hookPath: string;
 
     beforeEach(() => {
-      // Clean up any existing test directory
-      if (existsSync(testRepoPath)) {
-        rmSync(testRepoPath, { recursive: true, force: true });
-      }
-      // Create fresh test directory and initialize as git repo
-      mkdirSync(testRepoPath, { recursive: true });
+      // Create a unique temporary git repository for each test
+      testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-install-"));
       execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+      hooksDir = join(testRepoPath, ".git", "hooks");
+      hookPath = join(hooksDir, "commit-msg");
     });
 
     afterEach(() => {
@@ -188,16 +184,16 @@ describe("CommitHookManager", () => {
   });
 
   describe("Symbol.dispose", () => {
-    const testRepoPath: string = "/tmp/opencode/test-repo-dispose";
-    const hooksDir: string = join(testRepoPath, ".git", "hooks");
-    const hookPath: string = join(hooksDir, "commit-msg");
+    let testRepoPath: string;
+    let hooksDir: string;
+    let hookPath: string;
 
     beforeEach(() => {
-      if (existsSync(testRepoPath)) {
-        rmSync(testRepoPath, { recursive: true, force: true });
-      }
-      mkdirSync(testRepoPath, { recursive: true });
+      // Create a unique temporary git repository for each test
+      testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-dispose-"));
       execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+      hooksDir = join(testRepoPath, ".git", "hooks");
+      hookPath = join(hooksDir, "commit-msg");
     });
 
     afterEach(() => {
