@@ -35,6 +35,59 @@ describe("opencode-git-trailers", () => {
     expect(typeof hooks["tool.execute.before"]).toBe("function");
   });
 
+  it("should NOT modify git commit command when using hook manager", async () => {
+    const mockShellChain = {
+      text: vi.fn(),
+      quiet: vi.fn(),
+      nothrow: vi.fn(),
+      cwd: vi.fn(),
+    };
+
+    mockShellChain.cwd.mockReturnValue(mockShellChain);
+    mockShellChain.nothrow.mockReturnValue(mockShellChain);
+    mockShellChain.quiet.mockReturnValue(mockShellChain);
+    mockShellChain.text
+      .mockResolvedValueOnce("opencode.git-trailers.session {{session}}")
+      .mockResolvedValueOnce("John Doe")
+      .mockResolvedValueOnce("john@example.com");
+
+    const mockShell = vi.fn().mockReturnValue(mockShellChain);
+
+    const mockInput: PluginInput = {
+      client: {} as any,
+      project: {} as any,
+      directory: "/test/dir",
+      worktree: "/test/worktree",
+      experimental_workspace: { register: vi.fn() },
+      serverUrl: new URL("http://localhost"),
+      $: mockShell as any,
+    };
+
+    const hooks = await plugin(mockInput);
+    const beforeHook = hooks["tool.execute.before"];
+    const afterHook = hooks["tool.execute.after"];
+
+    const hookInput = {
+      tool: "bash",
+      sessionID: "test-session",
+      callID: "call-123",
+    };
+
+    const output = {
+      args: {
+        command: 'git commit -m "test commit"',
+      },
+    };
+
+    await beforeHook!(hookInput, output);
+
+    // Command should NOT be modified when using hook manager
+    expect(output.args.command).toBe('git commit -m "test commit"');
+    
+    // After hook should exist for cleanup
+    expect(afterHook).toBeDefined();
+  });
+
   it("should modify git commit commands with trailers", async () => {
     const mockShellChain = {
       text: vi.fn(),

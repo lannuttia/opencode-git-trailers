@@ -5,11 +5,18 @@ import { appendTrailersToCommand } from "./modify-command.js";
 import { buildTrailers } from "./trailers.js";
 import { getUserVariables, buildContextVariables } from "./variables.js";
 import type { Variables } from "./types.js";
+import { CommitHookManager } from "./hook-manager.js";
+import { existsSync } from "fs";
+import { join } from "path";
+import { execSync } from "child_process";
 
 const plugin: Plugin = async (input) => {
   // Store model/provider in closure to access across hooks
   let currentModel: string | undefined;
   let currentProvider: string | undefined;
+  
+  // Store hook manager per call ID for cleanup
+  const hookManagers: Map<string, CommitHookManager> = new Map();
 
   return {
     "chat.params": async (hookInput) => {
@@ -57,19 +64,50 @@ const plugin: Plugin = async (input) => {
 
         const allVariables: Variables = { ...userVars, ...contextVars };
 
-        // Build and apply trailers
+        // Build trailers
         const trailers: Record<string, string> = buildTrailers(
           trailerConfig,
           allVariables
         );
         
-        const modifiedCommand: string = appendTrailersToCommand(command, trailers);
-
-        output.args.command = modifiedCommand;
+        // Check for existing commit-msg hook
+        let existingHookPath: string | undefined;
+        try {
+          const hooksDir: string = execSync("git rev-parse --git-path hooks", {
+            cwd,
+            encoding: "utf-8",
+          }).trim();
+          
+          const hookPath: string = hooksDir.startsWith("/") 
+            ? join(hooksDir, "commit-msg")
+            : join(cwd, hooksDir, "commit-msg");
+          
+          if (existsSync(hookPath)) {
+            existingHookPath = hookPath;
+          }
+        } catch {
+          // Ignore errors finding existing hook
+        }
+        
+        // Create and install hook manager
+        const manager: CommitHookManager = new CommitHookManager(cwd, trailers, existingHookPath);
+        manager.installHook();
+        
+        // Store for cleanup in after hook
+        hookManagers.set(hookInput.callID, manager);
       } catch (error) {
         // Gracefully handle errors - don't break the commit
         // Log error for debugging but allow commit to proceed unchanged
         console.error("opencode-git-trailers: Error processing trailers:", error);
+      }
+    },
+    
+    "tool.execute.after": async (hookInput) => {
+      // Clean up hook if it was installed
+      const manager: CommitHookManager | undefined = hookManagers.get(hookInput.callID);
+      if (manager) {
+        manager[Symbol.dispose]();
+        hookManagers.delete(hookInput.callID);
       }
     },
   };
