@@ -1,5 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CommitHookManager } from "../src/hook-manager.js";
+import { mkdirSync, rmSync, existsSync, readFileSync, statSync } from "fs";
+import { join } from "path";
 
 describe("CommitHookManager", () => {
   describe("Disposable pattern", () => {
@@ -46,6 +48,86 @@ describe("CommitHookManager", () => {
       const script: string = manager.generateHookScript();
 
       expect(script).not.toContain("/test/repo/.git/hooks/commit-msg");
+    });
+  });
+
+  describe("installHook", () => {
+    const testRepoPath: string = "/tmp/opencode/test-repo-hook-install";
+    const hooksDir: string = join(testRepoPath, ".git", "hooks");
+    const hookPath: string = join(hooksDir, "commit-msg");
+
+    beforeEach(() => {
+      // Clean up any existing test directory
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+      // Create fresh test directory structure
+      mkdirSync(hooksDir, { recursive: true });
+    });
+
+    afterEach(() => {
+      // Clean up after tests
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+    });
+
+    it("should create hook file with generated script", () => {
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      });
+
+      manager.installHook();
+
+      expect(existsSync(hookPath)).toBe(true);
+      const content: string = readFileSync(hookPath, "utf-8");
+      expect(content).toContain("#!/bin/sh");
+      expect(content).toContain("git interpret-trailers");
+      expect(content).toContain("Session: test-123");
+    });
+
+    it("should make hook file executable", () => {
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      });
+
+      manager.installHook();
+
+      const stats = statSync(hookPath);
+      // Check if file has execute permission (owner, group, or others)
+      const isExecutable: boolean = (stats.mode & 0o111) !== 0;
+      expect(isExecutable).toBe(true);
+    });
+  });
+
+  describe("Symbol.dispose", () => {
+    const testRepoPath: string = "/tmp/opencode/test-repo-dispose";
+    const hooksDir: string = join(testRepoPath, ".git", "hooks");
+    const hookPath: string = join(hooksDir, "commit-msg");
+
+    beforeEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+      mkdirSync(hooksDir, { recursive: true });
+    });
+
+    afterEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+    });
+
+    it("should remove hook file on dispose", () => {
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      });
+
+      manager.installHook();
+      expect(existsSync(hookPath)).toBe(true);
+
+      manager[Symbol.dispose]();
+      expect(existsSync(hookPath)).toBe(false);
     });
   });
 });

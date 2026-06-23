@@ -1,3 +1,6 @@
+import { writeFileSync, chmodSync, unlinkSync, existsSync } from "fs";
+import { join } from "path";
+
 /**
  * Manages temporary git commit-msg hooks with automatic cleanup via Disposable pattern.
  */
@@ -5,11 +8,15 @@ export class CommitHookManager implements Disposable {
   private readonly repoPath: string;
   private readonly trailers: Record<string, string>;
   private readonly existingHookPath?: string;
+  private readonly hookPath: string;
+  private installed: boolean;
 
   constructor(repoPath: string, trailers: Record<string, string>, existingHookPath?: string) {
     this.repoPath = repoPath;
     this.trailers = trailers;
     this.existingHookPath = existingHookPath;
+    this.hookPath = join(repoPath, ".git", "hooks", "commit-msg");
+    this.installed = false;
   }
 
   generateHookScript(): string {
@@ -31,7 +38,16 @@ export class CommitHookManager implements Disposable {
     return script;
   }
 
+  installHook(): void {
+    const script: string = this.generateHookScript();
+    writeFileSync(this.hookPath, script, { mode: 0o755 });
+    this.installed = true;
+  }
+
   [Symbol.dispose](): void {
-    // Cleanup implementation will be added
+    if (this.installed && existsSync(this.hookPath)) {
+      unlinkSync(this.hookPath);
+      this.installed = false;
+    }
   }
 }
