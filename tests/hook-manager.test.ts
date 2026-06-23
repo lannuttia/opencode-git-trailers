@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CommitHookManager } from "../src/hook-manager.js";
-import { mkdirSync, rmSync, existsSync, readFileSync, statSync } from "fs";
+import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, statSync } from "fs";
 import { join } from "path";
 
 describe("CommitHookManager", () => {
@@ -97,6 +97,25 @@ describe("CommitHookManager", () => {
       // Check if file has execute permission (owner, group, or others)
       const isExecutable: boolean = (stats.mode & 0o111) !== 0;
       expect(isExecutable).toBe(true);
+    });
+
+    it("should backup existing commit-msg hook before overwriting", () => {
+      const originalContent: string = "#!/bin/sh\necho 'original hook'\n";
+      const backupPath: string = join(hooksDir, "commit-msg.backup");
+      
+      // Create an existing hook
+      writeFileSync(hookPath, originalContent, { mode: 0o755 });
+      
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      }, hookPath);
+
+      manager.installHook();
+
+      // Verify backup was created with original content
+      expect(existsSync(backupPath)).toBe(true);
+      const backupContent: string = readFileSync(backupPath, "utf-8");
+      expect(backupContent).toBe(originalContent);
     });
   });
 
