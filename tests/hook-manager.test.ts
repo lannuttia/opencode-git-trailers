@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CommitHookManager } from "../src/hook-manager.js";
-import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, statSync } from "fs";
+import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, statSync, readdirSync } from "fs";
 import { join } from "path";
 
 describe("CommitHookManager", () => {
@@ -36,7 +36,7 @@ describe("CommitHookManager", () => {
       const script: string = manager.generateHookScript();
 
       expect(script).toContain("#!/bin/sh");
-      expect(script).toContain("/test/repo/.git/hooks/commit-msg.backup \"$1\"");
+      expect(script).toMatch(/\/test\/repo\/\.git\/hooks\/commit-msg\.backup-\d+-[a-f0-9]+ "\$1"/);
       expect(script).toContain("git interpret-trailers");
     });
 
@@ -101,7 +101,6 @@ describe("CommitHookManager", () => {
 
     it("should backup existing commit-msg hook before overwriting", () => {
       const originalContent: string = "#!/bin/sh\necho 'original hook'\n";
-      const backupPath: string = join(hooksDir, "commit-msg.backup");
       
       // Create an existing hook
       writeFileSync(hookPath, originalContent, { mode: 0o755 });
@@ -112,9 +111,45 @@ describe("CommitHookManager", () => {
 
       manager.installHook();
 
-      // Verify backup was created with original content
-      expect(existsSync(backupPath)).toBe(true);
+      // Verify a backup was created with original content
+      const files: string[] = readdirSync(hooksDir);
+      const backupFiles: string[] = files.filter(f => f.startsWith("commit-msg.backup-"));
+      expect(backupFiles.length).toBe(1);
+      
+      const backupPath: string = join(hooksDir, backupFiles[0]);
       const backupContent: string = readFileSync(backupPath, "utf-8");
+      expect(backupContent).toBe(originalContent);
+    });
+
+    it("should use unique backup filename to avoid collisions", () => {
+      const originalContent: string = "#!/bin/sh\necho 'original hook'\n";
+      const existingBackupContent: string = "#!/bin/sh\necho 'old backup'\n";
+      const existingBackupPath: string = join(hooksDir, "commit-msg.backup");
+      
+      // Create an existing hook
+      writeFileSync(hookPath, originalContent, { mode: 0o755 });
+      
+      // Create a pre-existing backup file that should NOT be overwritten
+      writeFileSync(existingBackupPath, existingBackupContent, { mode: 0o755 });
+      
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      }, hookPath);
+
+      manager.installHook();
+
+      // Verify existing backup file is unchanged
+      expect(existsSync(existingBackupPath)).toBe(true);
+      const unchangedBackup: string = readFileSync(existingBackupPath, "utf-8");
+      expect(unchangedBackup).toBe(existingBackupContent);
+      
+      // Verify a new unique backup was created (not the .backup file)
+      const files: string[] = readdirSync(hooksDir);
+      const backupFiles: string[] = files.filter(f => f.startsWith("commit-msg.backup-"));
+      expect(backupFiles.length).toBe(1);
+      
+      const uniqueBackupPath: string = join(hooksDir, backupFiles[0]);
+      const backupContent: string = readFileSync(uniqueBackupPath, "utf-8");
       expect(backupContent).toBe(originalContent);
     });
   });
@@ -151,7 +186,6 @@ describe("CommitHookManager", () => {
 
     it("should restore original hook from backup on dispose", () => {
       const originalContent: string = "#!/bin/sh\necho 'original hook'\n";
-      const backupPath: string = join(hooksDir, "commit-msg.backup");
       
       // Create an existing hook
       writeFileSync(hookPath, originalContent, { mode: 0o755 });
@@ -162,8 +196,10 @@ describe("CommitHookManager", () => {
 
       manager.installHook();
       
-      // Verify the backup exists and hook is replaced
-      expect(existsSync(backupPath)).toBe(true);
+      // Verify a backup was created and hook is replaced
+      let files: string[] = readdirSync(hooksDir);
+      let backupFiles: string[] = files.filter(f => f.startsWith("commit-msg.backup-"));
+      expect(backupFiles.length).toBe(1);
       expect(readFileSync(hookPath, "utf-8")).not.toBe(originalContent);
 
       manager[Symbol.dispose]();
@@ -174,7 +210,9 @@ describe("CommitHookManager", () => {
       expect(restoredContent).toBe(originalContent);
       
       // Verify backup is cleaned up
-      expect(existsSync(backupPath)).toBe(false);
+      files = readdirSync(hooksDir);
+      backupFiles = files.filter(f => f.startsWith("commit-msg.backup-"));
+      expect(backupFiles.length).toBe(0);
     });
   });
 });

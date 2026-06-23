@@ -1,6 +1,7 @@
 import { writeFileSync, chmodSync, unlinkSync, existsSync, copyFileSync, renameSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
+import { randomBytes } from "crypto";
 
 /**
  * Resolves the git hooks directory using git rev-parse.
@@ -27,6 +28,16 @@ function resolveHooksDir(repoPath: string): string {
 }
 
 /**
+ * Generates a unique backup filename to avoid collisions.
+ * Format: commit-msg.backup-<timestamp>-<random>
+ */
+function generateUniqueBackupPath(hookPath: string): string {
+  const timestamp: number = Date.now();
+  const random: string = randomBytes(4).toString('hex');
+  return `${hookPath}.backup-${timestamp}-${random}`;
+}
+
+/**
  * Manages temporary git commit-msg hooks with automatic cleanup via Disposable pattern.
  */
 export class CommitHookManager implements Disposable {
@@ -43,7 +54,7 @@ export class CommitHookManager implements Disposable {
     this.existingHookPath = existingHookPath;
     const hooksDir: string = resolveHooksDir(repoPath);
     this.hookPath = join(hooksDir, "commit-msg");
-    this.backupPath = `${this.hookPath}.backup`;
+    this.backupPath = generateUniqueBackupPath(this.hookPath);
     this.installed = false;
   }
 
