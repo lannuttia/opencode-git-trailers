@@ -37,15 +37,15 @@ Add the plugin to your OpenCode configuration:
 
 This plugin uses a hybrid approach combining OpenCode-specific configuration with Git's standard trailer system:
 
-1. **`opencode.git-trailers.*`** - Specifies which trailers to add and their value templates
+1. **`opencode.trailers.*`** - Specifies which trailers to add and their value templates
 2. **`trailer.*` (optional)** - Git's standard trailer config for controlling key formatting
 
 #### Quick Start (Minimal Setup)
 
 ```bash
 # Add trailers with default (lowercase) formatting
-git config --global opencode.git-trailers.model '{{model}}'
-git config --global opencode.git-trailers.co-authored-by 'AI Assistant <ai@opencode.ai>'
+git config --global opencode.trailers.model '{{model}}'
+git config --global opencode.trailers.co-authored-by 'AI Assistant <ai@opencode.ai>'
 ```
 
 Result:
@@ -65,9 +65,9 @@ git config --global trailer.co-authored-by.key "Co-authored-by"
 git config --global trailer.signed-off-by.key "Signed-off-by"
 
 # Specify which trailers OpenCode should add (OpenCode-specific config)
-git config --global opencode.git-trailers.model '{{model}}'
-git config --global opencode.git-trailers.co-authored-by 'AI Assistant <ai@opencode.ai>'
-git config --global opencode.git-trailers.signed-off-by '{{user.name}} <{{user.email}}>'
+git config --global opencode.trailers.model '{{model}}'
+git config --global opencode.trailers.co-authored-by 'AI Assistant <ai@opencode.ai>'
+git config --global opencode.trailers.signed-off-by '{{user.name}} <{{user.email}}>'
 ```
 
 Result:
@@ -89,7 +89,7 @@ cd /path/to/your/repo
 git config trailer.model.key "Model"
 
 # Specify what to add
-git config opencode.git-trailers.model '{{model}}'
+git config opencode.trailers.model '{{model}}'
 ```
 
 Per-repository configuration overrides global configuration for the same trailer key.
@@ -100,10 +100,10 @@ Trailers support variable interpolation to include contextual information such a
 
 ```bash
 # Configure a trailer with model interpolation
-git config opencode.git-trailers.model '{{model}}'
+git config opencode.trailers.model '{{model}}'
 
 # Use git user information
-git config opencode.git-trailers.signed-off-by '{{user.name}} <{{user.email}}>'
+git config opencode.trailers.signed-off-by '{{user.name}} <{{user.email}}>'
 ```
 
 #### Available Variables
@@ -119,7 +119,7 @@ git config opencode.git-trailers.signed-off-by '{{user.name}} <{{user.email}}>'
 
 The plugin uses a two-step configuration system:
 
-1. **OpenCode Configuration** (`opencode.git-trailers.*`):
+1. **OpenCode Configuration** (`opencode.trailers.*`):
    - Determines **which** trailers are added to OpenCode commits
    - Provides **value templates** with variable interpolation (e.g., `{{model}}`)
    - **Required** for trailers to be added
@@ -127,13 +127,13 @@ The plugin uses a two-step configuration system:
 2. **Git Trailer Configuration** (`trailer.*.key`, optional):
    - Controls **how** trailer keys are formatted in the commit message
    - If present, Git formats the trailer key according to this setting
-   - If absent, the key-alias from `opencode.git-trailers.*` is used as-is (lowercase)
+   - If absent, the key-alias from `opencode.trailers.*` is used as-is (lowercase)
 
 **Example:**
 ```bash
 # The config key name creates the association:
 git config trailer.model.key "Model"           # ← Formats "model" as "Model"
-git config opencode.git-trailers.model '{{model}}'  # ← Adds trailer "model"
+git config opencode.trailers.model '{{model}}'  # ← Adds trailer "model"
 ```
 
 When OpenCode makes a commit, it generates: `--trailer "model:claude-4"`  
