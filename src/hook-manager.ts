@@ -1,4 +1,4 @@
-import { writeFileSync, chmodSync, unlinkSync, existsSync, copyFileSync } from "fs";
+import { writeFileSync, chmodSync, unlinkSync, existsSync, copyFileSync, renameSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
 
@@ -78,8 +78,17 @@ export class CommitHookManager implements Disposable {
   }
 
   [Symbol.dispose](): void {
-    if (this.installed && existsSync(this.hookPath)) {
-      unlinkSync(this.hookPath);
+    if (this.installed) {
+      const backupPath: string = `${this.hookPath}.backup`;
+      
+      // Restore original hook if backup exists
+      if (existsSync(backupPath)) {
+        renameSync(backupPath, this.hookPath);
+      } else if (existsSync(this.hookPath)) {
+        // No backup means no original hook existed
+        unlinkSync(this.hookPath);
+      }
+      
       this.installed = false;
     }
   }

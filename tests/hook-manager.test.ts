@@ -148,5 +148,33 @@ describe("CommitHookManager", () => {
       manager[Symbol.dispose]();
       expect(existsSync(hookPath)).toBe(false);
     });
+
+    it("should restore original hook from backup on dispose", () => {
+      const originalContent: string = "#!/bin/sh\necho 'original hook'\n";
+      const backupPath: string = join(hooksDir, "commit-msg.backup");
+      
+      // Create an existing hook
+      writeFileSync(hookPath, originalContent, { mode: 0o755 });
+      
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      }, hookPath);
+
+      manager.installHook();
+      
+      // Verify the backup exists and hook is replaced
+      expect(existsSync(backupPath)).toBe(true);
+      expect(readFileSync(hookPath, "utf-8")).not.toBe(originalContent);
+
+      manager[Symbol.dispose]();
+      
+      // Verify original hook is restored
+      expect(existsSync(hookPath)).toBe(true);
+      const restoredContent: string = readFileSync(hookPath, "utf-8");
+      expect(restoredContent).toBe(originalContent);
+      
+      // Verify backup is cleaned up
+      expect(existsSync(backupPath)).toBe(false);
+    });
   });
 });
