@@ -1,7 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { readGitTrailers } from "./config.js";
 import { isGitCommitCommand } from "./git-commit.js";
-import { appendTrailersToCommand } from "./modify-command.js";
 import { buildTrailers } from "./trailers.js";
 import { getUserVariables, buildContextVariables } from "./variables.js";
 import type { Variables } from "./types.js";
@@ -9,6 +8,26 @@ import { CommitHookManager } from "./hook-manager.js";
 import { existsSync } from "fs";
 import { join } from "path";
 import { execSync } from "child_process";
+
+/**
+ * Find existing commit-msg hook if present
+ */
+function findExistingCommitHook(cwd: string): string | undefined {
+  try {
+    const hooksDir: string = execSync("git rev-parse --git-path hooks", {
+      cwd,
+      encoding: "utf-8",
+    }).trim();
+    
+    const hookPath: string = hooksDir.startsWith("/") 
+      ? join(hooksDir, "commit-msg")
+      : join(cwd, hooksDir, "commit-msg");
+    
+    return existsSync(hookPath) ? hookPath : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 const plugin: Plugin = async (input) => {
   // Store model/provider in closure to access across hooks
@@ -70,24 +89,8 @@ const plugin: Plugin = async (input) => {
           allVariables
         );
         
-        // Check for existing commit-msg hook
-        let existingHookPath: string | undefined;
-        try {
-          const hooksDir: string = execSync("git rev-parse --git-path hooks", {
-            cwd,
-            encoding: "utf-8",
-          }).trim();
-          
-          const hookPath: string = hooksDir.startsWith("/") 
-            ? join(hooksDir, "commit-msg")
-            : join(cwd, hooksDir, "commit-msg");
-          
-          if (existsSync(hookPath)) {
-            existingHookPath = hookPath;
-          }
-        } catch {
-          // Ignore errors finding existing hook
-        }
+        // Find existing commit-msg hook to chain to
+        const existingHookPath: string | undefined = findExistingCommitHook(cwd);
         
         // Create and install hook manager
         const manager: CommitHookManager = new CommitHookManager(cwd, trailers, existingHookPath);
