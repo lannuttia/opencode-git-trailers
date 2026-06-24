@@ -1,3 +1,10 @@
+# [0.4.0](https://github.com/lannuttia/opencode-git-trailers/compare/v0.3.0...v0.4.0) (2026-06-24)
+
+
+### Features
+
+* add set -eo pipefail to hook script for error propagation ([9665a91](https://github.com/lannuttia/opencode-git-trailers/commit/9665a910cf5c8ba5298b4dc9382ed339557ee760))
+
 # [0.3.0](https://github.com/lannuttia/opencode-git-trailers/compare/v0.2.0...v0.3.0) (2026-06-24)
 
 
