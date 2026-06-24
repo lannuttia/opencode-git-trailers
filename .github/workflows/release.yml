@@ -34,7 +34,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          registry-url: https://registry.npmjs.org
 
       - name: Setup Bun
         uses: ./.github/actions/setup-bun
