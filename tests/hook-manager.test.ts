@@ -79,16 +79,6 @@ describe("CommitHookManager", () => {
 
       expect(script).not.toContain("/test/repo/.git/hooks/commit-msg");
     });
-
-    it("should include set -eo pipefail for error propagation", () => {
-      const manager: CommitHookManager = new CommitHookManager("/test/repo", {
-        "session": "test-session-123"
-      });
-
-      const script: string = manager.generateHookScript();
-
-      expect(script).toContain("set -eo pipefail");
-    });
   });
 
   describe("installHook", () => {
@@ -253,6 +243,88 @@ describe("CommitHookManager", () => {
       files = readdirSync(hooksDir);
       backupFiles = files.filter(f => f.startsWith("commit-msg.backup-"));
       expect(backupFiles.length).toBe(0);
+    });
+  });
+
+  describe("Error propagation from pre-existing hooks", () => {
+    let testRepoPath: string;
+    let hooksDir: string;
+    let hookPath: string;
+    let commitMsgFile: string;
+
+    beforeEach(() => {
+      testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-error-"));
+      execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+      execSync("git config user.name 'Test User'", { cwd: testRepoPath, stdio: "pipe" });
+      execSync("git config user.email 'test@example.com'", { cwd: testRepoPath, stdio: "pipe" });
+      hooksDir = join(testRepoPath, ".git", "hooks");
+      hookPath = join(hooksDir, "commit-msg");
+      commitMsgFile = join(testRepoPath, ".git", "COMMIT_EDITMSG");
+    });
+
+    afterEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+    });
+
+    it("should propagate errors from failing non-piped commands in pre-existing hooks", () => {
+      // Create a pre-existing hook that fails with a non-piped command
+      const failingHook: string = "#!/bin/sh\nfalse\n";
+      writeFileSync(hookPath, failingHook, { mode: 0o755 });
+      
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      }, hookPath);
+
+      manager.installHook();
+
+      // Create a commit message file
+      writeFileSync(commitMsgFile, "test commit\n");
+
+      // Execute the installed hook - it should fail
+      let exitCode: number = 0;
+      try {
+        execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'status' in error) {
+          exitCode = error.status as number;
+        }
+      }
+
+      expect(exitCode).not.toBe(0);
+      
+      manager[Symbol.dispose]();
+    });
+
+    it("should propagate errors from failing commands in pipelines in pre-existing hooks", () => {
+      // Create a pre-existing hook that fails in a pipeline
+      // The hook has set -eo pipefail so the false in the pipeline will cause it to fail
+      const failingPipelineHook: string = "#!/bin/sh\nset -eo pipefail\nfalse | true\n";
+      writeFileSync(hookPath, failingPipelineHook, { mode: 0o755 });
+      
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-123"
+      }, hookPath);
+
+      manager.installHook();
+
+      // Create a commit message file
+      writeFileSync(commitMsgFile, "test commit\n");
+
+      // Execute the installed hook - it should fail
+      let exitCode: number = 0;
+      try {
+        execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'status' in error) {
+          exitCode = error.status as number;
+        }
+      }
+
+      expect(exitCode).not.toBe(0);
+      
+      manager[Symbol.dispose]();
     });
   });
 });
