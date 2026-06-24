@@ -66,6 +66,7 @@ export class CommitHookManager implements Disposable {
     }
     
     let script: string = "#!/bin/sh\n";
+    script += "set -eo pipefail\n";
     
     if (this.existingHookPath) {
       script += `${this.backupPath} "$1"\n`;

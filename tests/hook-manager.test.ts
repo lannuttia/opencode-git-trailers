@@ -79,6 +79,16 @@ describe("CommitHookManager", () => {
 
       expect(script).not.toContain("/test/repo/.git/hooks/commit-msg");
     });
+
+    it("should include set -eo pipefail for error propagation", () => {
+      const manager: CommitHookManager = new CommitHookManager("/test/repo", {
+        "session": "test-session-123"
+      });
+
+      const script: string = manager.generateHookScript();
+
+      expect(script).toContain("set -eo pipefail");
+    });
   });
 
   describe("installHook", () => {
