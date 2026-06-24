@@ -246,6 +246,125 @@ describe("CommitHookManager", () => {
     });
   });
 
+  describe("Duplicate trailer prevention", () => {
+    let testRepoPath: string;
+    let hooksDir: string;
+    let hookPath: string;
+    let commitMsgFile: string;
+
+    beforeEach(() => {
+      testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-duplicates-"));
+      execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+      execSync("git config user.name 'Test User'", { cwd: testRepoPath, stdio: "pipe" });
+      execSync("git config user.email 'test@example.com'", { cwd: testRepoPath, stdio: "pipe" });
+      hooksDir = join(testRepoPath, ".git", "hooks");
+      hookPath = join(hooksDir, "commit-msg");
+      commitMsgFile = join(testRepoPath, ".git", "COMMIT_EDITMSG");
+    });
+
+    afterEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+    });
+
+    it("should not add duplicate trailers when they already exist in commit message", () => {
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-session-123",
+        "model": "claude-sonnet-4-5"
+      });
+
+      manager.installHook();
+
+      // Create a commit message that already contains the trailers
+      const commitMessageWithTrailers: string = 
+        "feat: add new feature\n\n" +
+        "This is a detailed description.\n\n" +
+        "session: test-session-123\n" +
+        "model: claude-sonnet-4-5\n";
+      
+      writeFileSync(commitMsgFile, commitMessageWithTrailers);
+
+      // Execute the hook
+      execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+
+      // Read the modified commit message
+      const modifiedMessage: string = readFileSync(commitMsgFile, "utf-8");
+
+      // Count occurrences of each trailer
+      const sessionCount: number = (modifiedMessage.match(/^session: test-session-123$/gm) || []).length;
+      const modelCount: number = (modifiedMessage.match(/^model: claude-sonnet-4-5$/gm) || []).length;
+
+      // Each trailer should appear exactly once
+      expect(sessionCount).toBe(1);
+      expect(modelCount).toBe(1);
+
+      manager[Symbol.dispose]();
+    });
+
+    it("should add trailers when they do not exist in commit message", () => {
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-session-456",
+        "model": "gpt-4"
+      });
+
+      manager.installHook();
+
+      // Create a commit message without trailers
+      const commitMessageWithoutTrailers: string = 
+        "feat: add new feature\n\n" +
+        "This is a detailed description.\n";
+      
+      writeFileSync(commitMsgFile, commitMessageWithoutTrailers);
+
+      // Execute the hook
+      execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+
+      // Read the modified commit message
+      const modifiedMessage: string = readFileSync(commitMsgFile, "utf-8");
+
+      // Verify trailers were added
+      expect(modifiedMessage).toContain("session: test-session-456");
+      expect(modifiedMessage).toContain("model: gpt-4");
+
+      manager[Symbol.dispose]();
+    });
+
+    it("should add only missing trailers when some already exist", () => {
+      const manager: CommitHookManager = new CommitHookManager(testRepoPath, {
+        "session": "test-session-789",
+        "model": "claude-sonnet-4-5",
+        "provider": "anthropic"
+      });
+
+      manager.installHook();
+
+      // Create a commit message with some existing trailers
+      const commitMessagePartialTrailers: string = 
+        "feat: add new feature\n\n" +
+        "This is a detailed description.\n\n" +
+        "model: claude-sonnet-4-5\n";
+      
+      writeFileSync(commitMsgFile, commitMessagePartialTrailers);
+
+      // Execute the hook
+      execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+
+      // Read the modified commit message
+      const modifiedMessage: string = readFileSync(commitMsgFile, "utf-8");
+
+      // Verify model trailer appears exactly once (was already there)
+      const modelCount: number = (modifiedMessage.match(/^model: claude-sonnet-4-5$/gm) || []).length;
+      expect(modelCount).toBe(1);
+
+      // Verify new trailers were added
+      expect(modifiedMessage).toContain("session: test-session-789");
+      expect(modifiedMessage).toContain("provider: anthropic");
+
+      manager[Symbol.dispose]();
+    });
+  });
+
   describe("Error propagation from pre-existing hooks", () => {
     let testRepoPath: string;
     let hooksDir: string;

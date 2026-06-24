@@ -62,7 +62,7 @@ export class CommitHookManager implements Disposable {
     const trailerArgs: string[] = [];
     
     for (const [key, value] of Object.entries(this.trailers)) {
-      trailerArgs.push(`--trailer "${key}:${value}"`);
+      trailerArgs.push(`--if-exists doNothing --trailer "${key}:${value}"`);
     }
     
     let script: string = "#!/bin/sh\n";
