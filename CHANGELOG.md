@@ -1,3 +1,16 @@
+# [0.5.0](https://github.com/lannuttia/opencode-git-trailers/compare/v0.4.0...v0.5.0) (2026-06-24)
+
+
+### Bug Fixes
+
+* change hook shebang to bash for pipefail compatibility ([9f4dbf3](https://github.com/lannuttia/opencode-git-trailers/commit/9f4dbf3f4cd73a7e7d1a170739602659326cea8d))
+
+
+### Features
+
+* add optional overwrite mode for git trailers ([7216bea](https://github.com/lannuttia/opencode-git-trailers/commit/7216beaf88e881edb9ec07ebfd4914ce64baeffd))
+* enable npm provenance for trusted publishing ([2a88379](https://github.com/lannuttia/opencode-git-trailers/commit/2a88379dbbf69e3f546353a0868ee38f1a175eba))
+
 # [0.4.0](https://github.com/lannuttia/opencode-git-trailers/compare/v0.3.0...v0.4.0) (2026-06-24)
 
 
