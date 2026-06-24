@@ -44,16 +44,14 @@ export class CommitHookManager implements Disposable {
   private readonly repoPath: string;
   private readonly trailers: Record<string, string>;
   private readonly existingHookPath?: string;
-  private readonly overwrite: boolean;
   private readonly hookPath: string;
   private readonly backupPath: string;
   private installed: boolean;
 
-  constructor(repoPath: string, trailers: Record<string, string>, existingHookPath?: string, overwrite: boolean = false) {
+  constructor(repoPath: string, trailers: Record<string, string>, existingHookPath?: string) {
     this.repoPath = repoPath;
     this.trailers = trailers;
     this.existingHookPath = existingHookPath;
-    this.overwrite = overwrite;
     const hooksDir: string = resolveHooksDir(repoPath);
     this.hookPath = join(hooksDir, "commit-msg");
     this.backupPath = generateUniqueBackupPath(this.hookPath);
@@ -62,10 +60,9 @@ export class CommitHookManager implements Disposable {
 
   generateHookScript(): string {
     const trailerArgs: string[] = [];
-    const ifExistsMode: string = this.overwrite ? "replace" : "doNothing";
     
     for (const [key, value] of Object.entries(this.trailers)) {
-      trailerArgs.push(`--if-exists ${ifExistsMode} --trailer "${key}:${value}"`);
+      trailerArgs.push(`--if-exists replace --trailer "${key}:${value}"`);
     }
     
     let script: string = "#!/bin/sh\n";
