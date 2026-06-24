@@ -15,11 +15,11 @@ jobs:
   snyk:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        uses: actions/checkout@v7
 
-      - uses: oven-sh/setup-bun@v2
-
-      - run: bun install
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master

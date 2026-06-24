@@ -6,19 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        uses: actions/checkout@v7
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.x
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+        uses: ./.github/actions/setup-bun
 
       - name: Lint
         run: bun run lint
@@ -30,45 +30,9 @@ jobs:
         run: bun run test:coverage
 
       - name: Upload coverage to Codecov
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: coverage/
           fail_ci_if_error: false
-
-  release:
-    needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node v24
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: npm
-          registry-url: https://registry.npmjs.org
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install Dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build Package
-        run: bun run build
-
-      - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bunx semantic-release
