@@ -1,3 +1,15 @@
+# [0.3.0](https://github.com/lannuttia/opencode-git-trailers/compare/v0.2.0...v0.3.0) (2026-06-24)
+
+
+### Bug Fixes
+
+* update commit-msg hook to modern husky format ([2c2d50c](https://github.com/lannuttia/opencode-git-trailers/commit/2c2d50cc3f09536d8bcad0791f36050dc84b8448))
+
+
+### Features
+
+* add commitlint to enforce conventional commit format ([7b31343](https://github.com/lannuttia/opencode-git-trailers/commit/7b31343fc513feb26541733fc1a9ef139df2c1b4))
+
 # [0.2.0](https://github.com/lannuttia/opencode-git-trailers/compare/v0.1.4...v0.2.0) (2026-06-24)
 
 
