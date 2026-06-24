@@ -365,6 +365,107 @@ describe("CommitHookManager", () => {
     });
   });
 
+  describe("Trailer overwriting", () => {
+    let testRepoPath: string;
+    let hooksDir: string;
+    let hookPath: string;
+    let commitMsgFile: string;
+
+    beforeEach(() => {
+      testRepoPath = mkdtempSync(join(tmpdir(), "git-trailers-overwrite-"));
+      execSync("git init", { cwd: testRepoPath, stdio: "pipe" });
+      execSync("git config user.name 'Test User'", { cwd: testRepoPath, stdio: "pipe" });
+      execSync("git config user.email 'test@example.com'", { cwd: testRepoPath, stdio: "pipe" });
+      hooksDir = join(testRepoPath, ".git", "hooks");
+      hookPath = join(hooksDir, "commit-msg");
+      commitMsgFile = join(testRepoPath, ".git", "COMMIT_EDITMSG");
+    });
+
+    afterEach(() => {
+      if (existsSync(testRepoPath)) {
+        rmSync(testRepoPath, { recursive: true, force: true });
+      }
+    });
+
+    it("should replace existing trailers when overwrite mode is enabled", () => {
+      const manager: CommitHookManager = new CommitHookManager(
+        testRepoPath, 
+        {
+          "session": "new-session-999",
+          "model": "gpt-4"
+        },
+        undefined,
+        true  // overwrite mode
+      );
+
+      manager.installHook();
+
+      // Create a commit message with existing trailers that have different values
+      const commitMessageWithOldTrailers: string = 
+        "feat: update feature\n\n" +
+        "This is a detailed description.\n\n" +
+        "session: old-session-123\n" +
+        "model: claude-sonnet-4-5\n";
+      
+      writeFileSync(commitMsgFile, commitMessageWithOldTrailers);
+
+      // Execute the hook
+      execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+
+      // Read the modified commit message
+      const modifiedMessage: string = readFileSync(commitMsgFile, "utf-8");
+
+      // Verify old trailer values were replaced with new ones
+      expect(modifiedMessage).toContain("session: new-session-999");
+      expect(modifiedMessage).toContain("model: gpt-4");
+      
+      // Verify old values are no longer present
+      expect(modifiedMessage).not.toContain("session: old-session-123");
+      expect(modifiedMessage).not.toContain("model: claude-sonnet-4-5");
+
+      manager[Symbol.dispose]();
+    });
+
+    it("should preserve existing trailer values when overwrite mode is disabled", () => {
+      const manager: CommitHookManager = new CommitHookManager(
+        testRepoPath, 
+        {
+          "session": "new-session-999",
+          "model": "gpt-4"
+        },
+        undefined,
+        false  // no overwrite (default)
+      );
+
+      manager.installHook();
+
+      // Create a commit message with existing trailers
+      const commitMessageWithOldTrailers: string = 
+        "feat: update feature\n\n" +
+        "This is a detailed description.\n\n" +
+        "session: old-session-123\n" +
+        "model: claude-sonnet-4-5\n";
+      
+      writeFileSync(commitMsgFile, commitMessageWithOldTrailers);
+
+      // Execute the hook
+      execSync(`${hookPath} ${commitMsgFile}`, { cwd: testRepoPath, stdio: "pipe" });
+
+      // Read the modified commit message
+      const modifiedMessage: string = readFileSync(commitMsgFile, "utf-8");
+
+      // Verify old trailer values are preserved
+      expect(modifiedMessage).toContain("session: old-session-123");
+      expect(modifiedMessage).toContain("model: claude-sonnet-4-5");
+      
+      // Verify new values were not added
+      expect(modifiedMessage).not.toContain("session: new-session-999");
+      expect(modifiedMessage).not.toContain("model: gpt-4");
+
+      manager[Symbol.dispose]();
+    });
+  });
+
   describe("Error propagation from pre-existing hooks", () => {
     let testRepoPath: string;
     let hooksDir: string;
