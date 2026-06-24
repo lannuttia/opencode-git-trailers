@@ -6,10 +6,6 @@ inputs:
     description: Bun version to install
     required: false
     default: '1.x'
-  frozen-lockfile:
-    description: Use frozen lockfile for installation
-    required: false
-    default: 'true'
 
 runs:
   using: composite
@@ -21,9 +17,4 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: |
-        if [ "${{ inputs.frozen-lockfile }}" = "true" ]; then
-          bun install --frozen-lockfile
-        else
-          bun install
-        fi
+      run: bun install --frozen-lockfile
