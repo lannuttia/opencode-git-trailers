@@ -65,7 +65,7 @@ export class CommitHookManager implements Disposable {
       trailerArgs.push(`--if-exists replace --trailer "${key}:${value}"`);
     }
     
-    let script: string = "#!/bin/sh\n";
+    let script: string = "#!/bin/bash\n";
     script += "set -eo pipefail\n";
     
     if (this.existingHookPath) {

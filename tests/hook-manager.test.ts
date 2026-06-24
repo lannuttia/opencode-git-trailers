@@ -52,7 +52,7 @@ describe("CommitHookManager", () => {
 
       const script: string = manager.generateHookScript();
 
-      expect(script).toContain("#!/bin/sh");
+      expect(script).toContain("#!/bin/bash");
       expect(script).toContain("git interpret-trailers");
       expect(script).toContain("--trailer \"session:test-session-123\"");
       expect(script).toContain("--trailer \"model:claude-sonnet-4-5\"");
@@ -65,7 +65,7 @@ describe("CommitHookManager", () => {
 
       const script: string = manager.generateHookScript();
 
-      expect(script).toContain("#!/bin/sh");
+      expect(script).toContain("#!/bin/bash");
       expect(script).toMatch(/\/test\/repo\/\.git\/hooks\/commit-msg\.backup-\d+-[a-f0-9]+ "\$1"/);
       expect(script).toContain("git interpret-trailers");
     });
@@ -110,7 +110,7 @@ describe("CommitHookManager", () => {
 
       expect(existsSync(hookPath)).toBe(true);
       const content: string = readFileSync(hookPath, "utf-8");
-      expect(content).toContain("#!/bin/sh");
+      expect(content).toContain("#!/bin/bash");
       expect(content).toContain("git interpret-trailers");
       expect(content).toContain("session:test-123");
     });
