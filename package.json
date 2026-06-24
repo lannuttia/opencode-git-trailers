@@ -1,6 +1,6 @@
 {
   "name": "opencode-git-trailers",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Automatically add standardized git trailers to AI-assisted commits for compliance, audit trails, and attribution",
   "type": "module",
   "main": "./dist/index.js",
